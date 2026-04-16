@@ -1,0 +1,55 @@
+{
+  "info": {
+    "name": "Smart Carpark API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"123456\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Dashboard Overview",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": { "raw": "{{baseUrl}}/api/v1/dashboard/overview", "host": ["{{baseUrl}}"], "path": ["api","v1","dashboard","overview"] }
+      }
+    },
+    {
+      "name": "Transactions",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": { "raw": "{{baseUrl}}/api/v1/transactions", "host": ["{{baseUrl}}"], "path": ["api","v1","transactions"] }
+      }
+    },
+    {
+      "name": "Generate Mock QR",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/v1/transactions/t2/payment", "host": ["{{baseUrl}}"], "path": ["api","v1","transactions","t2","payment"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"method\": \"qr\",\n  \"action\": \"generate\"\n}"
+        }
+      }
+    }
+  ]
+}
