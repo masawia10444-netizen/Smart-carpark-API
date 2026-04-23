@@ -43,7 +43,7 @@ const store = {
     }
   ],
   transactions: [
-[
+
   {
     "id": "tmock_19",
     "billNo": "PK202602020018",
@@ -1484,8 +1484,8 @@ const store = {
     "createdAt": "2026-04-28T14:00:00+07:00",
     "updatedAt": "2026-04-28T08:57:00.000Z"
   }
-]
   ],
+
   pricingConfig: {
     pricingRules: [
       { id: 'pr1', serviceType: 'parking', vehicleType: 'car', hourStart: 1, hourEnd: 2, price: 20, status: 'active' },

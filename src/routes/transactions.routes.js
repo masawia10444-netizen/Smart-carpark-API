@@ -20,9 +20,10 @@ router.get('/', async (req, res, next) => {
       title: 'ตรวจสอบและชำระเงิน',
       subtitle: 'แอดมินบริการ',
       meta: {
-        totalFound: result.pagination.total,
+        totalFound: result.meta.total,
         realtime: true
       },
+
       ...result
     });
   } catch (err) {

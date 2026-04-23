@@ -6,7 +6,8 @@
 
 ## 📌 ข้อมูลพื้นฐาน (Base Info)
 
-- **Base URL**: `http://localhost:3000` (หรือตามที่ Deploy จริง)
+- **Base URL**: `http://localhost:8080` (หรือตามที่ Deploy จริง)
+- **Documentation Portal**: `http://localhost:8081` (สำหรับดูคู่มือแบบ Interactive)
 - **Content-Type**: `application/json`
 - **Authentication**: ใช้ Bearer Token ใน Request Header
   ```http
@@ -92,6 +93,17 @@
     "printReceipt": true
   }
   ```
+
+---
+
+## 📈 3.5 รายงานเชิงสถิติ (Analytics Overview)
+
+- **Endpoint**: `GET /api/v1/overview/summary`
+- **Purpose**: สรุปยอดรวมและข้อมูลสำหรับวาดกราฟสถิติ
+- **Response Structure**:
+  - `usageChart`: ข้อมูลสำหรับกราฟเส้น (Label รายวัน)
+  - `serviceSummary`: สรุปรายได้แยกตามช่องทาง
+
 
 ---
 
