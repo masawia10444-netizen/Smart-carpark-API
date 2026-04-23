@@ -101,9 +101,12 @@ Authorization: Bearer <token>
 - `GET /api/v1/auth/me`
 - `POST /api/v1/auth/refresh`
 
-### Dashboard
-- `GET /api/v1/dashboard/overview`
-- `GET /api/v1/dashboard/revenue-overall`
+### Dashboard (Real-time Today stats)
+- `GET /api/v1/dashboard` - สรุปยอดขายรายวัน (Real-time)
+
+### Overview (Statistical Reports)
+- `GET /api/v1/overview/summary` - รายงานยอดสรุปตามช่วงเวลา (สัปดาห์/เดือน)
+
 
 ### Transactions
 - `GET /api/v1/transactions` - ค้นหาและดูรายการรถทั้งหมด

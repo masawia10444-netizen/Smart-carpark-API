@@ -17,9 +17,12 @@ router.get('/', async (req, res, next) => {
     const transactionsRaw = await listAllTransactions({ startDate, endDate });
     const currentUserId = req.user?.id || 'u1';
 
-    const dailyTransactions = transactionsRaw.filter(t => !t.isOverstay);
-    const paidToday = dailyTransactions.filter((t) => t.payment.status === 'paid');
-    const unpaidToday = dailyTransactions.filter((t) => t.payment.status !== 'paid' && t.status !== 'cancelled');
+    // Fix: Filter null or malformed transactions
+    const cleanTransactions = transactionsRaw.filter(t => t && t.status);
+
+    const dailyTransactions = cleanTransactions.filter(t => !t.isOverstay);
+    const paidToday = dailyTransactions.filter((t) => t.status === 'completed');
+    const unpaidToday = dailyTransactions.filter((t) => t.status !== 'completed' && t.status !== 'cancelled');
     
     const totalRevenueToday = paidToday.reduce((sum, t) => sum + (t.netAmount || 0), 0);
 
@@ -71,6 +74,7 @@ router.get('/', async (req, res, next) => {
       channelBreakdown,
       isRealtime: true
     });
+
   } catch (err) {
     next(err);
   }
