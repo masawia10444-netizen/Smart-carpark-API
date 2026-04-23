@@ -109,26 +109,33 @@ Authorization: Bearer <token>
 
 
 ### Transactions
-- `GET /api/v1/transactions` - ค้นหาและดูรายการรถทั้งหมด
-- `GET /api/v1/transactions/:id` - ดูรายละเอียดบิล
-- `POST /api/v1/transactions/:id/payment` - ยืนยันการชำระเงิน (รองรับ Partial/Full payment)
-- `PATCH /api/v1/transactions/:id` - แก้ไขข้อมูลทะเบียนรถหรือข้อมูลการจอด
+- `GET /api/v1/transactions` - ค้นหาและดูรายการรถทั้งหมด (รองรับ Query: `keyword`, `plate_no`, `bill_no`)
+- `GET /api/v1/transactions/:id` - ดูรายละเอียดบิลและประวัติการชำระเงินทั้งหมด
+- `POST /api/v1/transactions/:id/payment` - ยืนยันการชำระเงิน (รองรับ Partial/Full payment และอัปเดตสถานะบิลอัตโนมัติ)
+- `PATCH /api/v1/transactions/:id` - แก้ไขข้อมูลทะเบียนรถหรือข้อมูลการจอด (รองรับกล้องอ่านผิด)
 - `DELETE /api/v1/transactions/:id` - ลบรายการบิล
 
 
 ### Members (Staff Management)
-- `GET /api/v1/members/stats` - ดูสถิติจำนวนพนักงาน
+- `GET /api/v1/members/stats` - ดูสถิติจำนวนพนักงานแยกตามสถานะ
 - `GET /api/v1/members` - รายชื่อพนักงานทั้งหมด
 - `POST /api/v1/members` - เพิ่มพนักงานใหม่
 - `PATCH /api/v1/members/:id` - แก้ไขข้อมูลส่วนตัวพนักงาน
-- `PATCH /api/v1/members/:id/permissions` - แก้ไขสิทธิ์การเข้าถึงเมนู
+- `PATCH /api/v1/members/:id/permissions` - กำหนดสิทธิ์เข้าถึงเมนูต่างๆ ใน UI รายบุคคล
 - `DELETE /api/v1/members/:id` - ลบพนักงาน
 
 
+### Payment Settings (Managed by Super Admin)
+- `GET /api/v1/payment-settings/methods` - ดูรายการวิธีการชำระเงินทั้งหมด (Cash, QR, Bank)
+- `PATCH /api/v1/payment-settings/methods/:id` - เปิด/ปิด การใช้งานวิธีการชำระเงินรายตัว
+- `GET /api/v1/payment-settings/channels` - ดูข้อมูลจุดบริการ (Kiosk, Cashier, Gate) พร้อมวิธีจ่ายที่รองรับ
+- `PATCH /api/v1/payment-settings/channels/:id` - แก้ไขการจับคู่ (Mapping) วิธีชำระเงินกับจุดบริการนั้นๆ
+
+
 ### Service Pricing (Managed by Super Admin)
-- `GET /api/v1/service-pricing/config` - ดูการตั้งค่าราคาทั้งหมด
-- `POST /api/v1/service-pricing/rules` - เพิ่มกฎราคาใหม่
-- `PATCH /api/v1/service-pricing/rules/:id` - แก้ไขกฎราคา (ราคา/ช่วงเวลา)
+- `GET /api/v1/service-pricing/config` - ดูการตั้งค่าค่าบริการทั้งหมด
+- `POST /api/v1/service-pricing/rules` - เพิ่มกฎราคาใหม่ (Step Pricing)
+- `PATCH /api/v1/service-pricing/rules/:id` - แก้ไขกฎราคา (ราคา/ระยะเวลา/Grace Period)
 - `DELETE /api/v1/service-pricing/rules/:id` - ลบกฎราคา
 
 

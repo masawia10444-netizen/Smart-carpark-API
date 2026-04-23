@@ -13,6 +13,7 @@ const transactionRoutes = require('./routes/transactions.routes');
 const usersRoutes = require('./routes/users.routes');
 const memberRoutes = require('./routes/members.routes');
 const servicePricingRoutes = require('./routes/servicePricing.routes');
+const paymentSettingsRouter = require('./routes/paymentSettings.routes');
 
 const devicesRoutes = require('./routes/devices.routes');
 const themeRoutes = require('./routes/theme.routes');
@@ -92,6 +93,7 @@ app.use('/api/v1/transactions', transactionRoutes);
 app.use('/api/v1/users', authorize(['super_admin']), usersRoutes);
 app.use('/api/v1/members', memberRoutes);
 app.use('/api/v1/service-pricing', authorize(['super_admin']), servicePricingRoutes);
+app.use('/api/v1/payment-settings', paymentSettingsRouter);
 
 
 app.use('/api/v1/devices', devicesRoutes);
