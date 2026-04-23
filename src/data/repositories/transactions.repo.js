@@ -2,6 +2,9 @@ const { store } = require('../store');
 const { supabase, isSupabaseEnabled } = require('../../db/supabase');
 const { paginate } = require('../../utils/helpers');
 const { normalizePagination, buildMeta } = require('../../utils/pagination');
+const { calculateFee } = require('../../utils/pricing');
+const { getConfig } = require('./config.repo');
+
 
 function toNumberOrNull(value) {
   if (value === null || value === undefined) return null;
@@ -11,71 +14,58 @@ function toNumberOrNull(value) {
 
 function toTransactionApi(row) {
   if (!row) return null;
+  
+  const pricingRules = store.pricingConfig?.pricingRules || [];
   const entryAt = row.entry_at ?? row.entryAt;
   const exitAt = row.exit_at ?? row.exitAt;
   
-  let serviceDisplay = '';
-  if (entryAt) {
-    const entryDate = new Date(entryAt);
-    const endDate = exitAt ? new Date(exitAt) : new Date();
-    
-    // 1. Format Date: DD-MM-YYYY
-    const day = String(entryDate.getDate()).padStart(2, '0');
-    const month = String(entryDate.getMonth() + 1).padStart(2, '0');
-    const year = entryDate.getFullYear();
-    const dateFormatted = `${day}-${month}-${year}`;
+  const feeResult = calculateFee(entryAt, exitAt || new Date().toISOString(), pricingRules, {
+    vehicleType: row.vehicle_type || row.vehicleType,
+    serviceType: row.service_type || row.serviceType
+  });
 
-    // 2. Calculate Duration
-    const diffMs = endDate - entryDate;
-    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  const netAmount = feeResult.totalAmount;
+  const totalPaid = row.totalPaid || 0;
+  const status = row.status;
 
-    // 3. Combine: DD-MM-YYYY : H : m
-    serviceDisplay = `${dateFormatted} : ${diffHrs} : ${diffMins}`;
+  // 1. Format Date: DD-MM-YYYY
+  const entryDate = new Date(entryAt);
+  const day = String(entryDate.getDate()).padStart(2, '0');
+  const month = String(entryDate.getMonth() + 1).padStart(2, '0');
+  const year = entryDate.getFullYear();
+  const dateFormatted = `${day}-${month}-${year}`;
 
-    // 4. Overstay Logic (Barred for future use)
-    const isOverstay = row.status === 'pending' && diffHrs >= 72;
-    const fineAmount = 0; // Future: if (isOverstay) fineAmount = 2000;
+  // 2. Format Duration: H : m
+  const durationMs = feeResult.durationMs;
+  const hrs = Math.floor(durationMs / (1000 * 60 * 60));
+  const mins = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+  const durationFormatted = `${hrs} : ${mins}`;
 
-    return {
-      id: row.id,
-      billNo: row.bill_no ?? row.billNo,
-      plateNo: row.plate_no ?? row.plateNo,
-      vehicleType: row.vehicle_type ?? row.vehicleType,
-      serviceType: row.service_type ?? row.serviceType,
-      entryAt,
-      serviceDisplay,
-      exitAt,
-      durationMinute: Math.floor(diffMs / (1000 * 60)),
-      hours: diffHrs,
-      minutes: diffMins,
-      isOverstay,
-      fineAmount,
-      amount: toNumberOrNull(row.amount),
-      vat: toNumberOrNull(row.vat),
-      discount: toNumberOrNull(row.discount),
-      netAmount: toNumberOrNull(row.net_amount ?? row.netAmount),
-      status: row.status,
-      statusLabel: row.status === 'pending' ? 'รอชำระ' : row.status === 'completed' ? 'เสร็จสิ้น' : 'ยกเลิก',
-      payment: {
-        ...(row.payment || {}),
-        channel: row.payment?.channel ?? row.payment_channel,
-        processedBy: row.payment?.processedBy ?? row.payment_processed_by
-      },
-      receipt: row.receipt || {},
-      createdAt: row.created_at ?? row.createdAt,
-      updatedAt: row.updated_at ?? row.updatedAt
-    };
-  }
+  const serviceDisplay = `${dateFormatted} | ${durationFormatted}`;
 
   return {
     id: row.id,
-    billNo: row.billNo,
-    plateNo: row.plateNo,
-    status: row.status,
-    // ... basic mapping if no entryAt
+    billNo: row.bill_no ?? row.billNo,
+    plateNo: row.plate_no ?? row.plateNo,
+    vehicleType: row.vehicle_type ?? row.vehicleType,
+    serviceType: row.service_type ?? row.serviceType,
+    entryAt,
+    exitAt,
+    serviceDisplay,
+    durationMinute: Math.floor(durationMs / 60000),
+    amount: row.amount ?? netAmount,
+    netAmount: netAmount,
+    status,
+    statusLabel: status === 'pending' ? 'รอชำระ' : status === 'completed' ? 'เสร็จสิ้น' : (status === 'partially_paid' ? 'ชำระบางส่วน' : 'ยกเลิก'),
+    payments: row.payments || [],
+    totalPaid: totalPaid,
+    outstandingBalance: Math.max(0, netAmount - totalPaid),
+    receipt: row.receipt || {},
+    createdAt: row.created_at ?? row.createdAt,
+    updatedAt: row.updated_at ?? row.updatedAt
   };
 }
+
 
 async function listTransactions({ keyword, plateNo, billNo, status, paymentStatus, startDate, endDate, excludeOverstay, page = 1, perPage = 10 } = {}) {
   if (!isSupabaseEnabled) {
@@ -89,7 +79,7 @@ async function listTransactions({ keyword, plateNo, billNo, status, paymentStatu
     if (plateNo) rows = rows.filter((item) => item.plateNo.includes(plateNo));
     if (billNo) rows = rows.filter((item) => item.billNo.includes(billNo));
     if (status) rows = rows.filter((item) => item.status === status);
-    if (paymentStatus) rows = rows.filter((item) => item.payment.status === paymentStatus);
+    if (paymentStatus) rows = rows.filter((item) => item.payments.some(p => p.status === paymentStatus));
     if (excludeOverstay) rows = rows.filter((item) => !item.isOverstay);
 
     if (startDate) {
@@ -114,7 +104,6 @@ async function listTransactions({ keyword, plateNo, billNo, status, paymentStatu
   if (plateNo) query = query.ilike('plate_no', `%${plateNo}%`);
   if (billNo) query = query.ilike('bill_no', `%${billNo}%`);
   if (status) query = query.eq('status', status);
-  if (paymentStatus) query = query.eq('payment->>status', paymentStatus);
 
   if (startDate) query = query.gte('entry_at', startDate);
   if (endDate) query = query.lte('entry_at', endDate);
@@ -161,11 +150,46 @@ async function getTransactionById(id) {
   return toTransactionApi(data);
 }
 
+async function processPayment(id, { method, channel, amount, processedBy }) {
+  const transaction = await getTransactionById(id);
+  if (!transaction) return null;
+
+  const paidAt = new Date().toISOString();
+  const gracePeriodMinutes = 15;
+  const expiryAt = new Date(new Date(paidAt).getTime() + gracePeriodMinutes * 60000).toISOString();
+
+  const newPayment = {
+    id: `pay_${Date.now()}`,
+    method: method || 'cash',
+    channel: channel || 'cashier',
+    amount: amount || transaction.netAmount,
+    paidAt,
+    expiryAt,
+    processedBy: processedBy || 'u1'
+  };
+
+  if (!isSupabaseEnabled) {
+    if (!transaction.payments) transaction.payments = [];
+    transaction.payments.push(newPayment);
+    transaction.totalPaid = (transaction.totalPaid || 0) + newPayment.amount;
+    
+    if (transaction.totalPaid >= transaction.netAmount) {
+      transaction.status = 'completed';
+    } else {
+      transaction.status = 'partially_paid';
+    }
+    
+    transaction.updatedAt = paidAt;
+    return toTransactionApi(transaction);
+  }
+  
+  return null; 
+}
+
 async function saveTransaction(transaction) {
   if (!transaction) return null;
 
   if (!isSupabaseEnabled) {
-    // In-memory store keeps object references, nothing to persist.
     return transaction;
   }
 
@@ -184,7 +208,8 @@ async function saveTransaction(transaction) {
       discount: transaction.discount,
       net_amount: transaction.netAmount,
       status: transaction.status,
-      payment: transaction.payment,
+      payments: transaction.payments,
+      total_paid: transaction.totalPaid,
       receipt: transaction.receipt
     })
     .eq('id', transaction.id)

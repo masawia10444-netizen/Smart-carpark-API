@@ -63,7 +63,38 @@ router.post('/rules', async (req, res, next) => {
   }
 });
 
+router.patch('/rules/:id', async (req, res, next) => {
+  try {
+    const payload = req.body;
+    const current = await getConfig(CONFIG_KEY, store.pricingConfig);
+    const index = (current.pricingRules || []).findIndex((item) => item.id === req.params.id);
+    
+    if (index === -1) {
+      return res.status(404).json({ message: 'Pricing rule not found' });
+    }
+
+    const updatedRule = {
+      ...current.pricingRules[index],
+      ...payload
+    };
+
+    // Ensure price is numeric
+    if (payload.price !== undefined) updatedRule.price = Number(payload.price);
+
+    const nextRules = [...current.pricingRules];
+    nextRules[index] = updatedRule;
+
+    const nextConfig = { ...current, pricingRules: nextRules };
+    await setConfig(CONFIG_KEY, nextConfig);
+    
+    res.json({ message: 'Pricing rule updated', rule: updatedRule });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.delete('/rules/:id', async (req, res, next) => {
+
   try {
     const current = await getConfig(CONFIG_KEY, store.pricingConfig);
     const index = (current.pricingRules || []).findIndex((item) => item.id === req.params.id);

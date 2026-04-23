@@ -24,14 +24,15 @@ router.get('/', async (req, res, next) => {
     const totalRevenueToday = paidToday.reduce((sum, t) => sum + (t.netAmount || 0), 0);
 
     // Middle Section: Revenue Groups (Staff vs Scan)
-    const cashTransactions = paidToday.filter((t) => t.payment.channel === 'cashier');
-    const totalCashToday = cashTransactions.reduce((sum, t) => sum + (t.netAmount || 0), 0);
-    const myCashToday = cashTransactions
-      .filter((t) => t.payment.processedBy === currentUserId)
-      .reduce((sum, t) => sum + (t.netAmount || 0), 0);
+    const cashierPayments = paidToday.flatMap(t => t.payments || []).filter(p => p.channel === 'cashier');
+    const totalCashToday = cashierPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const myCashToday = cashierPayments
+      .filter((p) => p.processedBy === currentUserId)
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
     
-    const epayTransactions = paidToday.filter((t) => t.payment.channel !== 'cashier');
-    const totalEpayToday = epayTransactions.reduce((sum, t) => sum + (t.netAmount || 0), 0);
+    const epayPayments = paidToday.flatMap(t => t.payments || []).filter(p => p.channel !== 'cashier');
+    const totalEpayToday = epayPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
 
     const revenueGroups = [
       { id: 'staff', label: 'เจ้าหน้าที่ช่วยเหลือ', amount: totalCashToday, personalAmount: myCashToday, percent: totalCashToday > 0 ? Math.round((myCashToday / totalCashToday) * 100) : 0 },
@@ -47,15 +48,16 @@ router.get('/', async (req, res, next) => {
     ];
 
     const channelBreakdown = channels.map((ch) => {
-      const filtered = paidToday.filter((t) => t.payment.channel === ch.code);
-      const amount = filtered.reduce((sum, t) => sum + (t.netAmount || 0), 0);
+      const filteredPayments = paidToday.flatMap(t => t.payments || []).filter(p => p.channel === ch.code);
+      const amount = filteredPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
       return {
         ...ch,
         amount,
-        count: filtered.length,
+        count: filteredPayments.length,
         percent: totalRevenueToday > 0 ? Math.round((amount / totalRevenueToday) * 100) : 0
       };
     });
+
 
     res.json({
       summaryCards: {

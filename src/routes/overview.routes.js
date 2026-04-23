@@ -21,14 +21,17 @@ router.get('/summary', async (req, res, next) => {
 
     // 2. Summary Cards (Analytical Period)
     const dailyTransactions = transactions.filter(t => !t.isOverstay);
-    const paidList = dailyTransactions.filter((t) => t.payment.status === 'paid');
-    const unpaidList = dailyTransactions.filter((t) => t.payment.status !== 'paid' && t.status !== 'cancelled');
+    const paidList = transactions.filter((t) => (t.totalPaid || 0) >= (t.netAmount || 0));
+    const unpaidList = transactions.filter((t) => (t.totalPaid || 0) < (t.netAmount || 0) && t.status !== 'cancelled');
+
     
     const totalRevenue = paidList.reduce((sum, t) => sum + (t.netAmount || 0), 0);
 
     // 3. Middle Section: Revenue Groups (%)
-    const cashTotal = paidList.filter((t) => t.payment.channel === 'cashier').reduce((sum, t) => sum + (t.netAmount || 0), 0);
-    const epayTotal = paidList.filter((t) => t.payment.channel !== 'cashier').reduce((sum, t) => sum + (t.netAmount || 0), 0);
+    const allRecentPayments = paidList.flatMap(t => t.payments || []);
+    const cashTotal = allRecentPayments.filter((p) => p.channel === 'cashier').reduce((sum, p) => sum + (p.amount || 0), 0);
+    const epayTotal = allRecentPayments.filter((p) => p.channel !== 'cashier').reduce((sum, p) => sum + (p.amount || 0), 0);
+
 
     const revenueGroups = [
       { id: 'staff', label: 'เจ้าหน้าที่ช่วยเหลือ', amount: cashTotal, percent: totalRevenue > 0 ? Math.round((cashTotal / totalRevenue) * 100) : 0 },
@@ -90,11 +93,12 @@ router.get('/summary', async (req, res, next) => {
 
     // 5. Revenue by Service Type (Right Panel)
     const serviceSummary = [
-        { id: 'cashier', label: 'เงินสด (Cashier)', amount: cashTotal, count: paidList.filter(t => t.payment.channel === 'cashier').length, percent: totalRevenue > 0 ? Math.round((cashTotal / totalRevenue) * 100) : 0, icon: 'cash' },
-        { id: 'epayment', label: 'E-payment', amount: epayTotal, count: paidList.filter(t => t.payment.channel !== 'cashier').length, percent: totalRevenue > 0 ? Math.round((epayTotal / totalRevenue) * 100) : 0, icon: 'qr' },
-        { id: 'kiosk', label: 'Kiosk', amount: paidList.filter(t => t.payment.channel === 'kiosk').reduce((s, t) => s + (t.netAmount || 0), 0), count: paidList.filter(t => t.payment.channel === 'kiosk').length, percent: 12, icon: 'kiosk' }, // Mocking some % as per image
-        { id: 'gate', label: 'หน้าทางออก', amount: paidList.filter(t => t.payment.channel === 'gate').reduce((s, t) => s + (t.netAmount || 0), 0), count: paidList.filter(t => t.payment.channel === 'gate').length, percent: 4, icon: 'gate' }
+        { id: 'cashier', label: 'เงินสด (Cashier)', amount: cashTotal, count: allRecentPayments.filter(p => p.channel === 'cashier').length, percent: totalRevenue > 0 ? Math.round((cashTotal / totalRevenue) * 100) : 0, icon: 'cash' },
+        { id: 'epayment', label: 'E-payment', amount: epayTotal, count: allRecentPayments.filter(p => p.channel !== 'cashier').length, percent: totalRevenue > 0 ? Math.round((epayTotal / totalRevenue) * 100) : 0, icon: 'qr' },
+        { id: 'kiosk', label: 'Kiosk', amount: allRecentPayments.filter(p => p.channel === 'kiosk').reduce((s, p) => s + (p.amount || 0), 0), count: allRecentPayments.filter(p => p.channel === 'kiosk').length, percent: 12, icon: 'kiosk' }, 
+        { id: 'gate', label: 'หน้าทางออก', amount: allRecentPayments.filter(p => p.channel === 'gate').reduce((s, p) => s + (p.amount || 0), 0), count: allRecentPayments.filter(p => p.channel === 'gate').length, percent: 4, icon: 'gate' }
     ];
+
 
     res.json({
       filters: { startDate, endDate },

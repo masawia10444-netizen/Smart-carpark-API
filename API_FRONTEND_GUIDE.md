@@ -74,14 +74,20 @@
         "id": "t1",
         "billNo": "B2026-001",
         "plateNo": "กข-1234",
-        "amount": 80,
+        "netAmount": 150,
+        "totalPaid": 100,
+        "outstandingBalance": 50,  // ยอดที่ต้องจ่ายเพิ่ม (กรณีจอดเกินเวลา)
         "status": "pending",
-        "entryAt": "2026-04-22T08:00:00Z"
+        "serviceDisplay": "23-04-2026 | 2 : 15", // วันที่ | ชม : นาที
+        "payments": [
+           { "method": "qr", "amount": 100, "paidAt": "...", "expiryAt": "..." }
+        ]
       }
     ],
     "meta": { "total": 100, "totalPages": 10 }
   }
   ```
+
 
 ### ยืนยันการชำระเงิน (Confirm Payment)
 - **Endpoint**: `POST /api/v1/transactions/{id}/payment`
@@ -122,6 +128,11 @@
 ### ราคาค่าบริการ (Pricing)
 - **Get Config**: `GET /api/v1/service-pricing/config`
 - **Add Rule**: `POST /api/v1/service-pricing/rules`
+- **Update Rule**: `PATCH /api/v1/service-pricing/rules/{id}` 
+  - *Note*: ส่งเฉพาะฟิลด์ที่ต้องการแก้ เช่น `{"price": 15}`
+  - *Tip*: หากต้องการให้เป็นราคา "เป็นต้นไป" ให้ส่ง `hourEnd: 999`
+- **Delete Rule**: `DELETE /api/v1/service-pricing/rules/{id}`
+
 
 ### อุปกรณ์ (Devices)
 - **Get Status/Config**: `GET /api/v1/devices/config`
