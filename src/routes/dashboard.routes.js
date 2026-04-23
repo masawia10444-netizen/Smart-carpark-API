@@ -1,13 +1,9 @@
 const express = require('express');
 const { listAllTransactions } = require('../data/repositories/transactions.repo');
-
-const router = express.Router();
-
-const express = require('express');
-const { listAllTransactions } = require('../data/repositories/transactions.repo');
 const { store } = require('../data/store');
 
 const router = express.Router();
+
 
 router.get('/', async (req, res, next) => {
   try {
