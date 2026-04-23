@@ -6,7 +6,7 @@ function toMemberApi(row) {
     id: row.id,
     firstName: row.firstName || '',
     lastName: row.lastName || '',
-    fullName: row.name || `${row.firstName} ${row.lastName}`,
+    // fullName: row.name || `${row.firstName} ${row.lastName}`,
     email: row.email,
     phone: row.phone || '',
     role: row.role,
@@ -22,8 +22,8 @@ async function listMembers({ keyword, status, role } = {}) {
 
   if (keyword) {
     const kw = keyword.toLowerCase();
-    rows = rows.filter(r => 
-      (r.name && r.name.toLowerCase().includes(kw)) || 
+    rows = rows.filter(r =>
+      (r.name && r.name.toLowerCase().includes(kw)) ||
       (r.email && r.email.toLowerCase().includes(kw)) ||
       (r.phone && r.phone.includes(kw))
     );
