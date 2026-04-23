@@ -10,6 +10,7 @@ router.post('/login', async (req, res, next) => {
     const user = await findActiveUserByCredentials(username, password);
 
     if (!user) {
+
       return res.status(401).json({ message: 'Invalid username or password' });
     }
 

@@ -11,7 +11,8 @@ router.get('/summary', async (req, res, next) => {
   try {
     // 1. Setup Time Range (From query or default)
     const now = new Date();
-    const defaultStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7); // Default 7 days
+    const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1); // Default to start of current month (Month-to-Date)
+
     
     const startDate = req.query.start_date || defaultStart.toISOString();
     const endDate = req.query.end_date || now.toISOString();
@@ -34,15 +35,58 @@ router.get('/summary', async (req, res, next) => {
       { id: 'scan', label: 'สแกนจ่าย', amount: epayTotal, percent: totalRevenue > 0 ? Math.round((epayTotal / totalRevenue) * 100) : 0 }
     ];
 
-    // 4. User Usage Line Chart Data
-    const daysTh = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
-    const usageChart = daysTh.map((label, index) => {
-        const count = dailyTransactions.filter((t) => {
-          const d = new Date(t.entryAt);
-          return d.getDay() === index;
+    // 4. Dynamic Usage Timeline (Option 2: Time-based)
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffMs = end - start;
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    let usageChart = [];
+
+    if (diffDays <= 21) {
+      // Group by DAY
+      for (let i = 0; i < diffDays; i++) {
+        const d = new Date(start);
+        d.setDate(d.getDate() + i);
+        const label = `${d.getDate()}/${d.getMonth() + 1}`;
+        const count = dailyTransactions.filter(t => {
+          const tDate = new Date(t.entryAt);
+          return tDate.getDate() === d.getDate() && tDate.getMonth() === d.getMonth();
         }).length;
-        return { label, value: count };
-    });
+        usageChart.push({ label, value: count });
+      }
+    } else if (diffDays <= 90) {
+      // Group by WEEK
+      const weeksCount = Math.ceil(diffDays / 7);
+      for (let i = 0; i < weeksCount; i++) {
+        const wStart = new Date(start);
+        wStart.setDate(wStart.getDate() + (i * 7));
+        const wEnd = new Date(wStart);
+        wEnd.setDate(wEnd.getDate() + 6);
+        const label = `${wStart.getDate()}/${wStart.getMonth() + 1}`;
+        const count = dailyTransactions.filter(t => {
+          const tDate = new Date(t.entryAt);
+          return tDate >= wStart && tDate <= wEnd;
+        }).length;
+        usageChart.push({ label: `สัปดาห์ ${i + 1} (${label})`, value: count });
+      }
+    } else {
+      // Group by MONTH
+      let current = new Date(start.getFullYear(), start.getMonth(), 1);
+      const monthsTh = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      while (current <= end) {
+        const label = `${monthsTh[current.getMonth()]} ${current.getFullYear() + 543}`;
+        const mStart = new Date(current.getFullYear(), current.getMonth(), 1);
+        const mEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+        const count = dailyTransactions.filter(t => {
+          const tDate = new Date(t.entryAt);
+          return tDate >= mStart && tDate <= mEnd;
+        }).length;
+        usageChart.push({ label, value: count });
+        current.setMonth(current.getMonth() + 1);
+      }
+    }
+
 
     // 5. Revenue by Service Type (Right Panel)
     const serviceSummary = [
