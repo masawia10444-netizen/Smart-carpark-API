@@ -52,7 +52,20 @@ const store = {
       status: 'active',
       createdAt: nowIso,
       updatedAt: nowIso
+    },
+    {
+      id: 'u5',
+      username: 'superadmin',
+      password: '123456',
+      name: 'Main Super Admin',
+      email: 'superadmin@example.com',
+      role: 'super_admin',
+      permissions: ['dashboard.view', 'transaction.manage', 'setting.manage', 'user.manage'],
+      status: 'active',
+      createdAt: nowIso,
+      updatedAt: nowIso
     }
+
   ],
   transactions: [
 
