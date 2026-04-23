@@ -4,12 +4,16 @@ const morgan = require('morgan');
 const swaggerUi = require('swagger-ui-express');
 
 const authMiddleware = require('./middleware/auth');
+const { authorize } = require('./middlewares/auth.middleware');
+
 const authRoutes = require('./routes/auth.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const overviewRoutes = require('./routes/overview.routes');
 const transactionRoutes = require('./routes/transactions.routes');
 const usersRoutes = require('./routes/users.routes');
+const memberRoutes = require('./routes/members.routes');
 const servicePricingRoutes = require('./routes/servicePricing.routes');
+
 const devicesRoutes = require('./routes/devices.routes');
 const themeRoutes = require('./routes/theme.routes');
 const systemSettingsRoutes = require('./routes/systemSettings.routes');
@@ -85,8 +89,11 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/overview', overviewRoutes);
 app.use('/api/v1/transactions', transactionRoutes);
-app.use('/api/v1/users', usersRoutes);
-app.use('/api/v1/service-pricing', servicePricingRoutes);
+app.use('/api/v1/users', authorize(['super_admin']), usersRoutes);
+app.use('/api/v1/members', memberRoutes);
+app.use('/api/v1/service-pricing', authorize(['super_admin']), servicePricingRoutes);
+
+
 app.use('/api/v1/devices', devicesRoutes);
 app.use('/api/v1/theme', themeRoutes);
 app.use('/api/v1/system-settings', systemSettingsRoutes);

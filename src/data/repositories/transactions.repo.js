@@ -227,29 +227,30 @@ async function updateTransaction(id, updates) {
     const index = store.transactions.findIndex(t => t.id === id);
     if (index === -1) return null;
     
-    // Map API fields back to internal structure if needed
+    // Support both plateNo and plate_no for updates
+    const current = store.transactions[index];
     const updated = { 
-      ...store.transactions[index], 
+      ...current, 
       ...updates,
+      plateNo: updates.plateNo ?? current.plateNo ?? current.plate_no,
+      plate_no: updates.plateNo ?? current.plateNo ?? current.plate_no,
       updatedAt: new Date().toISOString()
     };
+    
     store.transactions[index] = updated;
-    return updated;
+    return toTransactionApi(updated);
   }
 
   // Handle Supabase mapping for updates
-  const dbUpdates = {
-    bill_no: updates.billNo,
-    plate_no: updates.plateNo,
-    vehicle_type: updates.vehicleType,
-    service_type: updates.serviceType,
-    status: updates.status,
-    payment: updates.payment,
-    updated_at: new Date().toISOString()
-  };
-
-  // Remove undefined fields
-  Object.keys(dbUpdates).forEach(key => dbUpdates[key] === undefined && delete dbUpdates[key]);
+  const dbUpdates = {};
+  if (updates.plateNo !== undefined) dbUpdates.plate_no = updates.plateNo;
+  if (updates.vehicleType !== undefined) dbUpdates.vehicle_type = updates.vehicleType;
+  if (updates.serviceType !== undefined) dbUpdates.service_type = updates.serviceType;
+  if (updates.status !== undefined) dbUpdates.status = updates.status;
+  if (updates.totalPaid !== undefined) dbUpdates.total_paid = updates.totalPaid;
+  if (updates.payments !== undefined) dbUpdates.payments = updates.payments;
+  
+  dbUpdates.updated_at = new Date().toISOString();
 
   const { data, error } = await supabase
     .from('transactions')

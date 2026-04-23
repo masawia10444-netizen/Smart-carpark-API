@@ -3,12 +3,13 @@
 โปรเจกต์นี้เป็น Node.js + Express mock backend สำหรับระบบ Smart Carpark ฝั่ง admin โดยเน้นให้พร้อมใช้สำหรับการพัฒนา frontend หรือใช้เป็นต้นแบบ backend ก่อนเชื่อมฐานข้อมูลและ payment จริง
 
 ## คุณสมบัติ
-- Node.js + Express
-- Mock authentication
-- Mock payment (QR / Cash / Transfer)
-- In-memory data store (ยังไม่ต่อฐานข้อมูล)
-- API แบบกระชับ 26 เส้น
-- พร้อมนำไปต่อ frontend ได้ทันที
+- **Dynamic Pricing Engine**: ระบบคิดเงินอัตโนมัติตามระยะเวลา (Step Pricing) รองรับค่าจอดแบบฟรี 1 ชม. แรก หรือราคาขั้นบันได
+- **Incremental Payments**: รองรับการชำระเงินหลายครั้ง (เช่น จ่ายแล้วจอดเกเกินเวลา) พร้อมระบบ Grace Period (15 นาที)
+- **RBAC Security**: ระบบความปลอดภัยแยกสิทธิ์การเข้าถึง (Super Admin vs Staff)
+- **Member & Staff Management**: จัดการข้อมูลพนักงานและกำหนดสิทธิ์เข้าถึงเมนูต่างๆ รายบุคคลตามหน้าจอ UI
+- **Transaction Editing**: ฟังก์ชันแก้ไขข้อมูลทะเบียนรถและข้อมูลการจอดกรณีกล้อง LPR อ่านผิด
+- **Mock Data**: ชุดข้อมูลพนักงานจำลอง (วิชัย, สมชาย, สมหญิง) พร้อมใช้งาน
+
 
 ## ต่อฐานข้อมูลด้วย Supabase (Postgres)
 โปรเจกต์นี้รองรับ Supabase แล้ว โดย **ถ้าใส่ ENV จะอ่าน/เขียนจาก DB** แต่ถ้าไม่ใส่จะยังทำงานแบบ in-memory เหมือนเดิม
@@ -105,22 +106,28 @@ Authorization: Bearer <token>
 - `GET /api/v1/dashboard/revenue-overall`
 
 ### Transactions
-- `GET /api/v1/transactions`
-- `GET /api/v1/transactions/:id`
-- `POST /api/v1/transactions/:id/payment`
-- `PATCH /api/v1/transactions/:id/status`
+- `GET /api/v1/transactions` - ค้นหาและดูรายการรถทั้งหมด
+- `GET /api/v1/transactions/:id` - ดูรายละเอียดบิล
+- `POST /api/v1/transactions/:id/payment` - ยืนยันการชำระเงิน (รองรับ Partial/Full payment)
+- `PATCH /api/v1/transactions/:id` - แก้ไขข้อมูลทะเบียนรถหรือข้อมูลการจอด
+- `DELETE /api/v1/transactions/:id` - ลบรายการบิล
 
-### Users
-- `GET /api/v1/users`
-- `POST /api/v1/users`
-- `PUT /api/v1/users/:id`
-- `DELETE /api/v1/users/:id`
 
-### Service Pricing
-- `GET /api/v1/service-pricing/config`
-- `PUT /api/v1/service-pricing/config`
-- `POST /api/v1/service-pricing/rules`
-- `DELETE /api/v1/service-pricing/rules/:id`
+### Members (Staff Management)
+- `GET /api/v1/members/stats` - ดูสถิติจำนวนพนักงาน
+- `GET /api/v1/members` - รายชื่อพนักงานทั้งหมด
+- `POST /api/v1/members` - เพิ่มพนักงานใหม่
+- `PATCH /api/v1/members/:id` - แก้ไขข้อมูลส่วนตัวพนักงาน
+- `PATCH /api/v1/members/:id/permissions` - แก้ไขสิทธิ์การเข้าถึงเมนู
+- `DELETE /api/v1/members/:id` - ลบพนักงาน
+
+
+### Service Pricing (Managed by Super Admin)
+- `GET /api/v1/service-pricing/config` - ดูการตั้งค่าราคาทั้งหมด
+- `POST /api/v1/service-pricing/rules` - เพิ่มกฎราคาใหม่
+- `PATCH /api/v1/service-pricing/rules/:id` - แก้ไขกฎราคา (ราคา/ช่วงเวลา)
+- `DELETE /api/v1/service-pricing/rules/:id` - ลบกฎราคา
+
 
 ### Devices
 - `GET /api/v1/devices/config`
