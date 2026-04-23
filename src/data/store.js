@@ -1176,6 +1176,7 @@ const store = {
     }
   ],
   "parkingStates": [
+    {
       "billNo": "PK202604230031",
       "plateNo": "ทน-9697",
       "vehicleType": "car",
