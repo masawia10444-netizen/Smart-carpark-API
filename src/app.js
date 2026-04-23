@@ -6,6 +6,7 @@ const swaggerUi = require('swagger-ui-express');
 const authMiddleware = require('./middleware/auth');
 const authRoutes = require('./routes/auth.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const overviewRoutes = require('./routes/overview.routes');
 const transactionRoutes = require('./routes/transactions.routes');
 const usersRoutes = require('./routes/users.routes');
 const servicePricingRoutes = require('./routes/servicePricing.routes');
@@ -82,6 +83,7 @@ app.get('/health/db', async (req, res) => {
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/overview', overviewRoutes);
 app.use('/api/v1/transactions', transactionRoutes);
 app.use('/api/v1/users', usersRoutes);
 app.use('/api/v1/service-pricing', servicePricingRoutes);

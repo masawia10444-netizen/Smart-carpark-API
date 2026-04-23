@@ -125,6 +125,8 @@ const openapi = {
         properties: {
           status: { type: 'string', example: 'paid' },
           method: { type: 'string', nullable: true, example: 'cash' },
+          channel: { type: 'string', nullable: true, example: 'cashier', enum: ['mobile', 'kiosk', 'gate', 'cashier'] },
+          processedBy: { type: 'string', nullable: true, example: 'u1' },
           paidAt: { type: 'string', format: 'date-time', nullable: true },
           qrCodeText: { type: 'string', nullable: true },
           qrCodeImageUrl: { type: 'string', nullable: true },
@@ -149,13 +151,16 @@ const openapi = {
           vehicleType: { type: 'string', example: 'car' },
           serviceType: { type: 'string', example: 'parking' },
           entryAt: { type: 'string', format: 'date-time', nullable: true },
+          serviceDisplay: { type: 'string', example: '22-04-2026 : 5 : 12' },
           exitAt: { type: 'string', format: 'date-time', nullable: true },
-          durationMinute: { type: 'integer', nullable: true },
-          amount: { type: 'number', nullable: true },
+          durationMinute: { type: 'integer', example: 135 },
+          durationDisplay: { type: 'string', example: '2 ชม. 15 นาที' },
+          amount: { type: 'number', example: 80 },
           vat: { type: 'number', nullable: true },
           discount: { type: 'number', nullable: true },
           netAmount: { type: 'number', nullable: true },
-          status: { type: 'string' },
+          status: { type: 'string', example: 'pending' },
+          statusLabel: { type: 'string', example: 'รอชำระ' },
           payment: { $ref: '#/components/schemas/Payment' },
           receipt: { $ref: '#/components/schemas/Receipt' },
           createdAt: { type: 'string', format: 'date-time' },
@@ -173,7 +178,8 @@ const openapi = {
         type: 'object',
         required: ['method'],
         properties: {
-          method: { type: 'string', enum: ['qr', 'cash', 'transfer'] },
+          method: { type: 'string', enum: ['qr', 'cash', 'transfer', 'epay'] },
+          channel: { type: 'string', enum: ['mobile', 'kiosk', 'gate', 'cashier'], nullable: true },
           action: { type: 'string', enum: ['confirm', 'generate'], example: 'confirm' },
           referenceNo: { type: 'string', nullable: true }
         }
@@ -353,8 +359,8 @@ const openapi = {
         tags: ['Dashboard'],
         summary: 'Dashboard overview',
         parameters: [
-          { in: 'query', name: 'start_date', schema: { type: 'string' } },
-          { in: 'query', name: 'end_date', schema: { type: 'string' } },
+          { in: 'query', name: 'start_date', schema: { type: 'string' }, description: 'ISO Date string' },
+          { in: 'query', name: 'end_date', schema: { type: 'string' }, description: 'ISO Date string' },
           { in: 'query', name: 'branch_id', schema: { type: 'string' } }
         ],
         responses: {
@@ -398,9 +404,24 @@ const openapi = {
         summary: 'Get transaction by id',
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
-          200: { description: 'Transaction', content: { 'application/json': { schema: { $ref: '#/components/schemas/Transaction' } } } },
-          404: { description: 'Not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
-          401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
+          200: { description: 'Transaction details', content: { 'application/json': { schema: { $ref: '#/components/schemas/Transaction' } } } }
+        }
+      },
+      patch: {
+        tags: ['Transactions'],
+        summary: 'Update transaction',
+        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+        requestBody: { content: { 'application/json': { schema: { $ref: '#/components/schemas/Transaction' } } } },
+        responses: {
+          200: { description: 'Updated' }
+        }
+      },
+      delete: {
+        tags: ['Transactions'],
+        summary: 'Delete transaction',
+        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+        responses: {
+          200: { description: 'Deleted' }
         }
       }
     },

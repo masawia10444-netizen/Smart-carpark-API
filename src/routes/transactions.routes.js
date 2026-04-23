@@ -1,21 +1,30 @@
 const express = require('express');
-const { listTransactions, getTransactionById, saveTransaction } = require('../data/repositories/transactions.repo');
+const { listTransactions, getTransactionById, saveTransaction, updateTransaction, deleteTransaction } = require('../data/repositories/transactions.repo');
 
 const router = express.Router();
 
 router.get('/', async (req, res, next) => {
   try {
-    const { keyword, plate_no: plateNo, bill_no: billNo, status, payment_status: paymentStatus, page = 1, per_page = 10 } = req.query;
+    const { keyword, plate_no: plateNo, bill_no: billNo, page = 1, per_page = 10 } = req.query;
+    
+    // Page 3: Operation list (Usually shows all or searchable)
     const result = await listTransactions({
       keyword,
       plateNo,
       billNo,
-      status,
-      paymentStatus,
-      page,
-      perPage: per_page
+      page: parseInt(page),
+      perPage: parseInt(per_page)
     });
-    res.json(result);
+
+    res.json({
+      title: 'ตรวจสอบและชำระเงิน',
+      subtitle: 'แอดมินบริการ',
+      meta: {
+        totalFound: result.pagination.total,
+        realtime: true
+      },
+      ...result
+    });
   } catch (err) {
     next(err);
   }
@@ -24,17 +33,8 @@ router.get('/', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
   try {
     const transaction = await getTransactionById(req.params.id);
-    if (!transaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
-    }
-
-    return res.json({
-      ...transaction,
-      receiptPreview: {
-        printableText: transaction.receipt.printableText || `Smart Carpark\nBill: ${transaction.billNo}\nPlate: ${transaction.plateNo}\nAmount: ${transaction.netAmount} THB`,
-        canPrint: transaction.payment.status === 'paid'
-      }
-    });
+    if (!transaction) return res.status(404).json({ message: 'Not found' });
+    res.json(transaction);
   } catch (err) {
     next(err);
   }
@@ -42,74 +42,48 @@ router.get('/:id', async (req, res, next) => {
 
 router.post('/:id/payment', async (req, res, next) => {
   try {
+    const { method, channel, printReceipt } = req.body;
     const transaction = await getTransactionById(req.params.id);
-    if (!transaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
-    }
 
-    const { method, action = 'confirm', referenceNo } = req.body;
-    if (!['qr', 'cash', 'transfer'].includes(method)) {
-      return res.status(400).json({ message: 'method must be qr, cash, or transfer' });
-    }
+    if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
 
-    if (method === 'qr' && action === 'generate') {
-      const qrCodeText = `MOCKQR|${transaction.billNo}|${transaction.netAmount}|${Date.now()}`;
-      const qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCodeText)}`;
-      transaction.payment.qrCodeText = qrCodeText;
-      transaction.payment.qrCodeImageUrl = qrCodeImageUrl;
-      transaction.updatedAt = new Date().toISOString();
-      await saveTransaction(transaction);
-
-      return res.json({
-        message: 'Mock QR generated successfully',
-        transactionId: transaction.id,
-        amount: transaction.netAmount,
-        qrCodeText,
-        qrCodeImageUrl,
-        expiredAt: new Date(Date.now() + 15 * 60 * 1000).toISOString()
-      });
-    }
-
-    transaction.payment = {
-      ...transaction.payment,
-      status: 'paid',
-      method,
-      paidAt: new Date().toISOString(),
-      referenceNo: referenceNo || `${method.toUpperCase()}-${Date.now()}`
+    const updates = {
+      status: 'completed',
+      payment: {
+        status: 'paid',
+        method: method || 'cash',
+        channel: channel || 'cashier',
+        processedBy: req.user?.id || 'u1',
+        paidAt: new Date().toISOString()
+      },
+      receipt: {
+        printed: !!printReceipt,
+        printedAt: printReceipt ? new Date().toISOString() : null
+      }
     };
-    transaction.status = 'completed';
-    transaction.receipt.receiptNo = transaction.receipt.receiptNo || `RCP-${Date.now()}`;
-    transaction.receipt.issuedAt = new Date().toISOString();
-    transaction.receipt.printableText = `Smart Carpark\nReceipt No: ${transaction.receipt.receiptNo}\nBill: ${transaction.billNo}\nPlate: ${transaction.plateNo}\nAmount: ${transaction.netAmount} THB\nMethod: ${method}`;
-    transaction.updatedAt = new Date().toISOString();
 
-    const saved = await saveTransaction(transaction);
-
-    return res.json({
-      message: 'Mock payment completed successfully',
-      transaction: saved
-    });
+    const updated = await updateTransaction(req.params.id, updates);
+    res.json({ message: 'Payment confirmed successfully', transaction: updated });
   } catch (err) {
     next(err);
   }
 });
 
-router.patch('/:id/status', async (req, res, next) => {
+router.patch('/:id', async (req, res, next) => {
   try {
-    const transaction = await getTransactionById(req.params.id);
-    if (!transaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
-    }
+    const updated = await updateTransaction(req.params.id, req.body);
+    if (!updated) return res.status(404).json({ message: 'Not found' });
+    res.json({ message: 'Updated successfully', transaction: updated });
+  } catch (err) {
+    next(err);
+  }
+});
 
-    const { status } = req.body;
-    if (!['pending', 'completed', 'cancelled', 'void'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
-    }
-
-    transaction.status = status;
-    transaction.updatedAt = new Date().toISOString();
-    const saved = await saveTransaction(transaction);
-    res.json({ message: 'Transaction status updated', transaction: saved });
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const success = await deleteTransaction(req.params.id);
+    if (!success) return res.status(404).json({ message: 'Not found' });
+    res.json({ message: 'Deleted successfully' });
   } catch (err) {
     next(err);
   }
