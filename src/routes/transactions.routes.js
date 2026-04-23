@@ -80,6 +80,18 @@ router.patch('/:id', async (req, res, next) => {
   }
 });
 
+// Backward compatibility for /status endpoint
+router.patch('/:id/status', async (req, res, next) => {
+  try {
+    const updated = await updateTransaction(req.params.id, req.body);
+    if (!updated) return res.status(404).json({ message: 'Not found' });
+    res.json({ message: 'Updated successfully (legacy endpoint)', transaction: updated });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 router.delete('/:id', async (req, res, next) => {
   try {
     const success = await deleteTransaction(req.params.id);
