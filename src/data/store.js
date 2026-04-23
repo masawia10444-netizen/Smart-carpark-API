@@ -40,6 +40,18 @@ const store = {
       status: 'active',
       createdAt: nowIso,
       updatedAt: nowIso
+    },
+    {
+      id: 'u4',
+      username: 'cashier',
+      password: '123456',
+      name: 'Test Cashier',
+      email: 'cashier@example.com',
+      role: 'staff',
+      permissions: ['dashboard.view', 'transaction.manage'],
+      status: 'active',
+      createdAt: nowIso,
+      updatedAt: nowIso
     }
   ],
   transactions: [
