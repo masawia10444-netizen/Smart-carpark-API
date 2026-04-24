@@ -1,5 +1,6 @@
 const express = require('express');
 const { listTransactions, getTransactionById, saveTransaction, updateTransaction, deleteTransaction } = require('../data/repositories/transactions.repo');
+const { authorize } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 

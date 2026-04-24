@@ -1,0 +1,8 @@
+{
+  "username": "limited_staff",
+  "password": "password789",
+  "firstName": "Limited",
+  "lastName": "Permissions",
+  "role": "staff",
+  "permissions": ["dashboard", "overview", "transactions"]
+}
