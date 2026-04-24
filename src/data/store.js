@@ -13,10 +13,13 @@ const store = {
       "email": "admin1@example.com",
       "role": "super_admin",
       "permissions": [
-        "dashboard.view",
-        "transaction.manage",
-        "setting.manage",
-        "user.manage"
+        "dashboard",
+        "transactions",
+        "overview",
+        "pricing",
+        "devices",
+        "theme",
+        "settings"
       ],
       "status": "active",
       "createdAt": "2026-04-23T10:24:56.405Z",
@@ -30,8 +33,8 @@ const store = {
       "email": "admin2@example.com",
       "role": "staff",
       "permissions": [
-        "dashboard.view",
-        "transaction.manage"
+        "dashboard",
+        "transactions"
       ],
       "status": "active",
       "createdAt": "2026-04-23T10:24:56.405Z",
@@ -45,8 +48,8 @@ const store = {
       "email": "admin3@example.com",
       "role": "staff",
       "permissions": [
-        "dashboard.view",
-        "transaction.manage"
+        "dashboard",
+        "transactions"
       ],
       "status": "active",
       "createdAt": "2026-04-23T10:24:56.405Z",
@@ -60,8 +63,8 @@ const store = {
       "email": "cashier@example.com",
       "role": "staff",
       "permissions": [
-        "dashboard.view",
-        "transaction.manage"
+        "dashboard",
+        "transactions"
       ],
       "status": "active",
       "createdAt": "2026-04-23T10:24:56.405Z",

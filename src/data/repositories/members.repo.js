@@ -59,7 +59,7 @@ async function createMember(data) {
     phone: data.phone,
     role: data.role || 'staff',
     status: 'active',
-    permissions: data.permissions || ['dashboard', 'check'],
+    permissions: data.permissions || ['dashboard', 'transactions'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
