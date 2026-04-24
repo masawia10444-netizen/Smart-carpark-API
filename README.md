@@ -2,34 +2,29 @@
 
 โปรเจกต์นี้เป็น Node.js + Express mock backend สำหรับระบบ Smart Carpark ฝั่ง admin โดยเน้นให้พร้อมใช้สำหรับการพัฒนา frontend หรือใช้เป็นต้นแบบ backend ก่อนเชื่อมฐานข้อมูลและ payment จริง
 
-## คุณสมบัติ
-- **Dynamic Pricing Engine**: ระบบคิดเงินอัตโนมัติตามระยะเวลา (Step Pricing) รองรับค่าจอดแบบฟรี 1 ชม. แรก หรือราคาขั้นบันได
-- **Incremental Payments**: รองรับการชำระเงินหลายครั้ง (เช่น จ่ายแล้วจอดเกเกินเวลา) พร้อมระบบ Grace Period (15 นาที)
-- **RBAC Security**: ระบบความปลอดภัยแยกสิทธิ์การเข้าถึง (Super Admin vs Staff)
-- **Member & Staff Management**: จัดการข้อมูลพนักงานและกำหนดสิทธิ์เข้าถึงเมนูต่างๆ รายบุคคลตามหน้าจอ UI
-- **Transaction Editing**: ฟังก์ชันแก้ไขข้อมูลทะเบียนรถและข้อมูลการจอดกรณีกล้อง LPR อ่านผิด
-- **Mock Data**: ชุดข้อมูลพนักงานจำลอง (วิชัย, สมชาย, สมหญิง) พร้อมใช้งาน
+## คุณสมบัติเด่น
+- **🚀 Dynamic Pricing Engine**: ระบบคิดเงินอัตโนมัติตามระยะเวลา (Step Pricing) รองรับค่าจอดแบบฟรี 1 ชม. แรก หรือราคาขั้นบันได
+- **💸 Incremental Payments**: รองรับการชำระเงินหลายครั้ง (กรณีจอดเกินเวลาหลังจ่าย) พร้อมระบบ Grace Period (15 นาที)
+- **🔐 Granular RBAC Security**: ระบบความปลอดภัยแบบล็อค 2 ชั้น (Role + Permissions) ตรวจสอบสิทธิ์ทั้งที่หน้าบ้านและหลังบ้านอย่างเข้มงวด
+- **👥 Member Management**: จัดการข้อมูลพนักงานและกำหนดสิทธิ์เข้าถึงเมนูต่างๆ รายบุคคลตามกลุ่มหน้าที่
+- **📸 Transaction Editing**: ฟังก์ชันแก้ไขข้อมูลทะเบียนรถและข้อมูลการจอดกรณีกล้อง LPR อ่านผิด
+- **📦 Mock Data**: ข้อมูลครบถ้วน ทั้งประวัติการจอดจำลองกว่า 50 รายการ และบัญชีพนักงานพร้อมทดสอบ
 
+---
 
-## ต่อฐานข้อมูลด้วย Supabase (Postgres)
-โปรเจกต์นี้รองรับ Supabase แล้ว โดย **ถ้าใส่ ENV จะอ่าน/เขียนจาก DB** แต่ถ้าไม่ใส่จะยังทำงานแบบ in-memory เหมือนเดิม
+## สิทธิ์การใช้งานระบบ (Permissions)
+ระบบใช้ Key สั้นๆ ในการควบคุมการเข้าถึงเมนู ซึ่งสามารถกำหนดให้พนักงานแต่ละคนได้ในหน้า "การตั้งค่าสมาชิก":
+- `dashboard`: เข้าถึงหน้าสรุปยอดขายรายวัน (Real-time)
+- `transactions`: เข้าถึงหน้าตรวจค้นทะเบียนรถ และกดยืนยันการชำระเงิน
+- `overview`: เข้าถึงหน้าสรุปวิเคราะห์ข้อมูลเชิงสถิติ (Grand Totals)
+- `pricing`: เข้าถึงหน้าตั้งค่ากฎราคาค่าบริการและช่องทางการชำระเงิน
+- `devices`: เข้าถึงหน้าจัดการและตรวจสอบสถานะอุปกรณ์ (Camera, Gate, Kiosk)
+- `theme`: เข้าถึงหน้าตั้งค่าสีและธีมของระบบ
+- `settings`: เข้าถึงหน้าตั้งค่าระบบทั่วไป
 
-### 1) สร้างตารางใน Supabase
-รันไฟล์นี้ใน Supabase SQL Editor:
-- `supabase/schema.sql`
+*หมายเหตุ: เฉพาะสิทธิ์การจัดการสมาชิก (Members Management) จะถูกล็อคไว้ให้ระดับ **`super_admin`** เท่านั้น*
 
-ถ้าต้องการข้อมูลตั้งต้นแบบใน `src/data/store.js` ให้รันต่อ:
-- `supabase/seed.sql`
-
-### 2) ตั้งค่า ENV
-คัดลอก `.env.example` → `.env` แล้วกรอกค่า:
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY` (แนะนำสำหรับ backend เท่านั้น ห้ามเอาไปใช้ใน frontend)
-
-### 3) เช็คการเชื่อมต่อ
-```http
-GET /health/db
-```
+---
 
 ## วิธีใช้งาน
 
@@ -38,53 +33,29 @@ GET /health/db
 npm install
 ```
 
-### 2) รันแบบ development
-```bash
-npm run dev
-```
-
-### 3) รันแบบปกติ
+### 2) รันเซิร์ฟเวอร์
 ```bash
 npm start
 ```
 
-เซิร์ฟเวอร์จะทำงานที่:
+เซิร์ฟเวอร์จะทำงานที่พอร์ต **8080**:
 ```bash
-http://localhost:3000
+http://localhost:8080
 ```
 
-## API Docs (Swagger)
-เปิดเอกสาร API ได้ที่:
-```bash
-http://localhost:3000/docs
-```
+### 3) API Docs (Swagger / OpenAPI)
+- เอกสาร API: `http://localhost:8080/docs`
+- ไฟล์ OpenAPI JSON: `http://localhost:8080/docs/openapi.json`
 
-ไฟล์ OpenAPI JSON:
-```bash
-http://localhost:3000/docs/openapi.json
-```
-
-## Health Check
-```http
-GET /health
-```
+---
 
 ## Demo Login
-```json
-{
-  "username": "admin",
-  "password": "123456"
-}
-```
 
-หรือ
-
-```json
-{
-  "username": "cashier",
-  "password": "123456"
-}
-```
+| Role | Username | Password | Permissions |
+| :--- | :--- | :--- | :--- |
+| **Super Admin** | `admin1` | `123` | เข้าถึงได้ทุกเมนู |
+| **Cashier** | `cashier` | `123456` | `dashboard`, `transactions` |
+| **Super Admin (Main)** | `superadmin` | `123456` | เข้าถึงได้ทุกเมนู |
 
 เมื่อ login สำเร็จ ให้นำ `token` ไปใส่ใน Header:
 ```http
@@ -93,123 +64,32 @@ Authorization: Bearer <token>
 
 ---
 
-## API Summary
+## API Summary (V1)
 
-### Auth
-- `POST /api/v1/auth/login`
+### 🔑 Auth
+- `POST /api/v1/auth/login` - เข้าสู่ระบบ (คืนค่าโปรไฟล์และ Permissions)
 - `POST /api/v1/auth/logout`
-- `GET /api/v1/auth/me`
-- `POST /api/v1/auth/refresh`
+- `GET /api/v1/auth/me` - ตรวจสอบข้อมูลผู้ใช้งานไอดีปัจจุบัน
 
-### Dashboard (Real-time Today stats)
-- `GET /api/v1/dashboard` - สรุปยอดขายรายวัน (Real-time)
+### 📊 Dashboard
+- `GET /api/v1/dashboard` - สถิติรายวันแบบ Real-time
 
-### Overview (Statistical Reports)
-- `GET /api/v1/overview/summary` - รายงานยอดสรุปตามช่วงเวลา (สัปดาห์/เดือน)
+### 🔍 Transactions (Parking Operations)
+- `GET /api/v1/transactions` - ค้นหารายการรถ (ทะเบียน/เลขบิล)
+- `POST /api/v1/transactions/:id/payment` - ยืนยันการรับชำระเงิน
+- `PATCH /api/v1/transactions/:id` - แก้ไขข้อมูลรถ (กรณีกล้องอ่านผิด)
 
+### 👥 Members (Management - Super Admin Only)
+- `GET /api/v1/members` - จัดการพนักงานทั้งหมด
+- `PATCH /api/v1/members/:id/permissions` - อัปเดตสิทธิ์การใช้งาน (ใช้ Permission Keys ด้านบน)
 
-### Transactions
-- `GET /api/v1/transactions` - ค้นหาและดูรายการรถทั้งหมด (รองรับ Query: `keyword`, `plate_no`, `bill_no`)
-- `GET /api/v1/transactions/:id` - ดูรายละเอียดบิลและประวัติการชำระเงินทั้งหมด
-- `POST /api/v1/transactions/:id/payment` - ยืนยันการชำระเงิน (รองรับ Partial/Full payment และอัปเดตสถานะบิลอัตโนมัติ)
-- `PATCH /api/v1/transactions/:id` - แก้ไขข้อมูลทะเบียนรถหรือข้อมูลการจอด (รองรับกล้องอ่านผิด)
-- `DELETE /api/v1/transactions/:id` - ลบรายการบิล
-
-
-### Members (Staff Management)
-- `GET /api/v1/members/stats` - ดูสถิติจำนวนพนักงานแยกตามสถานะ
-- `GET /api/v1/members` - รายชื่อพนักงานทั้งหมด
-- `POST /api/v1/members` - เพิ่มพนักงานใหม่
-- `PATCH /api/v1/members/:id` - แก้ไขข้อมูลส่วนตัวพนักงาน
-- `PATCH /api/v1/members/:id/permissions` - กำหนดสิทธิ์เข้าถึงเมนูต่างๆ ใน UI รายบุคคล
-- `DELETE /api/v1/members/:id` - ลบพนักงาน
-
-
-### Payment Settings (Managed by Super Admin)
-- `GET /api/v1/payment-settings/methods` - ดูรายการวิธีการชำระเงินทั้งหมด (Cash, QR, Bank)
-- `PATCH /api/v1/payment-settings/methods/:id` - เปิด/ปิด การใช้งานวิธีการชำระเงินรายตัว
-- `GET /api/v1/payment-settings/channels` - ดูข้อมูลจุดบริการ (Kiosk, Cashier, Gate) พร้อมวิธีจ่ายที่รองรับ
-- `PATCH /api/v1/payment-settings/channels/:id` - แก้ไขการจับคู่ (Mapping) วิธีชำระเงินกับจุดบริการนั้นๆ
-
-
-### Service Pricing (Managed by Super Admin)
-- `GET /api/v1/service-pricing/config` - ดูการตั้งค่าค่าบริการทั้งหมด
-- `POST /api/v1/service-pricing/rules` - เพิ่มกฎราคาใหม่ (Step Pricing)
-- `PATCH /api/v1/service-pricing/rules/:id` - แก้ไขกฎราคา (ราคา/ระยะเวลา/Grace Period)
-- `DELETE /api/v1/service-pricing/rules/:id` - ลบกฎราคา
-
-
-### Devices
-- `GET /api/v1/devices/config`
-- `POST /api/v1/devices`
-- `PUT /api/v1/devices/:id`
-- `DELETE /api/v1/devices/:id`
-
-### Theme
-- `GET /api/v1/theme`
-- `PUT /api/v1/theme`
-
-### System Settings
-- `GET /api/v1/system-settings`
-- `PUT /api/v1/system-settings`
-
----
-
-## ตัวอย่างการสร้าง Mock QR Payment
-```http
-POST /api/v1/transactions/t2/payment
-Content-Type: application/json
-Authorization: Bearer <token>
-```
-
-```json
-{
-  "method": "qr",
-  "action": "generate"
-}
-```
-
-## ตัวอย่างการ confirm mock payment
-```json
-{
-  "method": "cash"
-}
-```
-
-หรือ
-
-```json
-{
-  "method": "transfer",
-  "referenceNo": "TRX-001"
-}
-```
+### ⚙️ Settings & Pricing
+- `GET/POST/PATCH /api/v1/service-pricing/rules` - กฎราคาค่าจอด
+- `GET/PATCH /api/v1/payment-settings/methods` - เปิด/ปิด ช่องทางรับเงิน
+- `GET/PUT /api/v1/devices/config` - จัดการอุปกรณ์
 
 ---
 
 ## หมายเหตุสำคัญ
-- ข้อมูลทั้งหมดอยู่ใน memory ถ้า restart server ข้อมูลจะกลับค่าเริ่มต้น
-- QR Payment เป็น mock เท่านั้น ยังไม่เชื่อมธนาคารจริง
-- เหมาะสำหรับใช้คู่กับ frontend, demo, หรือใช้เป็น starter backend
-
-## โครงสร้างโปรเจกต์
-```bash
-src/
-  app.js
-  server.js
-  data/
-    store.js
-  middleware/
-    auth.js
-  routes/
-    auth.routes.js
-    dashboard.routes.js
-    transactions.routes.js
-    users.routes.js
-    servicePricing.routes.js
-    devices.routes.js
-    theme.routes.js
-    systemSettings.routes.js
-  utils/
-    helpers.js
-```
+- **In-Memory Store**: ข้อมูลทั้งหมดอยู่ใน RAM ถ้า Restart Server ข้อมูลที่แก้ไขจะกลับเป็นค่าตั้งต้น (ยกเว้นกรณีเชื่อมต่อ Supabase)
+- **Security Check**: การแก้ไขผ่าน Postman หรือเครื่องมืออื่นๆ จะถูกตรวจสอบสิทธิ์หลังบ้านทุกครั้ง (403 Forbidden หากสิทธิ์ไม่พอ)
