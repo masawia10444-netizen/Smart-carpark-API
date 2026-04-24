@@ -92,7 +92,7 @@ app.use('/api/v1/overview', overviewRoutes);
 app.use('/api/v1/transactions', transactionRoutes);
 app.use('/api/v1/users', authorize(['super_admin']), usersRoutes);
 app.use('/api/v1/members', memberRoutes);
-app.use('/api/v1/service-pricing', authorize(['super_admin']), servicePricingRoutes);
+app.use('/api/v1/service-pricing', authorize(['super_admin', 'staff']), servicePricingRoutes);
 app.use('/api/v1/payment-settings', paymentSettingsRouter);
 
 

@@ -1,9 +1,12 @@
 const express = require('express');
 const { store, createId } = require('../data/store');
 const { getConfig, setConfig } = require('../data/repositories/config.repo');
+const { authorize } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 const CONFIG_KEY = 'devices';
+
+router.use(authorize(['super_admin', 'staff'], 'devices'));
 
 function refreshSummary(devicesConfig) {
   if (!devicesConfig.summary) devicesConfig.summary = {};

@@ -1,7 +1,10 @@
 const express = require('express');
 const { listAllTransactions } = require('../data/repositories/transactions.repo');
+const { authorize } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
+
+router.use(authorize(['super_admin', 'staff'], 'overview'));
 
 /**
  * GET /api/v1/overview/summary

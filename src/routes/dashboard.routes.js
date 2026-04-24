@@ -1,8 +1,11 @@
 const express = require('express');
 const { listAllTransactions } = require('../data/repositories/transactions.repo');
 const { store } = require('../data/store');
+const { authorize } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
+
+router.use(authorize(['super_admin', 'staff'], 'dashboard'));
 
 
 router.get('/', async (req, res, next) => {

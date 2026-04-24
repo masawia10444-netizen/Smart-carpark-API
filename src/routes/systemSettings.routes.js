@@ -1,9 +1,12 @@
 const express = require('express');
 const { store } = require('../data/store');
 const { getConfig, setConfig } = require('../data/repositories/config.repo');
+const { authorize } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 const CONFIG_KEY = 'system_settings';
+
+router.use(authorize(['super_admin', 'staff'], 'settings'));
 
 router.get('/', async (req, res, next) => {
   try {

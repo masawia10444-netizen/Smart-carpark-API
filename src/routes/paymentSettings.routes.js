@@ -3,8 +3,8 @@ const router = express.Router();
 const paymentRepo = require('../data/repositories/paymentSettings.repo');
 const { authorize } = require('../middlewares/auth.middleware');
 
-// Payment settings are restricted to super_admin
-router.use(authorize(['super_admin']));
+// Payment settings are restricted to super_admin or staff with pricing permission
+router.use(authorize(['super_admin', 'staff'], 'pricing'));
 
 // หมวดวิธีการชำระเงิน (Global Payment Methods)
 router.get('/methods', async (req, res, next) => {

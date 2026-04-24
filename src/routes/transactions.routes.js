@@ -3,6 +3,10 @@ const { listTransactions, getTransactionById, saveTransaction, updateTransaction
 
 const router = express.Router();
 
+// Apply permission check to all routes in this file
+// All roles (super_admin, staff) can access, but staff must have 'transactions' permission
+router.use(authorize(['super_admin', 'staff'], 'transactions'));
+
 router.get('/', async (req, res, next) => {
   try {
     const { keyword, plate_no: plateNo, bill_no: billNo, page = 1, per_page = 10 } = req.query;
