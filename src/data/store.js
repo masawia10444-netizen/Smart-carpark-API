@@ -78,10 +78,13 @@ const store = {
       "email": "superadmin@example.com",
       "role": "super_admin",
       "permissions": [
-        "dashboard.view",
-        "transaction.manage",
-        "setting.manage",
-        "user.manage"
+        "dashboard",
+        "transactions",
+        "overview",
+        "pricing",
+        "devices",
+        "theme",
+        "settings"
       ],
       "status": "active",
       "createdAt": "2026-04-23T10:24:56.405Z",
