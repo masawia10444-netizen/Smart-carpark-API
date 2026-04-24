@@ -162,28 +162,30 @@ async function processPayment(id, { method, channel, amount, processedBy }) {
     id: `pay_${Date.now()}`,
     method: method || 'cash',
     channel: channel || 'cashier',
-    amount: amount || transaction.netAmount,
+    amount: amount || (transaction.netAmount - (transaction.totalPaid || 0)),
     paidAt,
     expiryAt,
     processedBy: processedBy || 'u1'
   };
 
+  transaction.payments = transaction.payments || [];
+  transaction.payments.push(newPayment);
+  transaction.totalPaid = (transaction.totalPaid || 0) + newPayment.amount;
+  
+  if (transaction.totalPaid >= (transaction.netAmount || 0)) {
+    transaction.status = 'completed';
+  } else {
+    transaction.status = 'partially_paid';
+  }
+  
+  transaction.updatedAt = paidAt;
+
   if (!isSupabaseEnabled) {
-    if (!transaction.payments) transaction.payments = [];
-    transaction.payments.push(newPayment);
-    transaction.totalPaid = (transaction.totalPaid || 0) + newPayment.amount;
-    
-    if (transaction.totalPaid >= transaction.netAmount) {
-      transaction.status = 'completed';
-    } else {
-      transaction.status = 'partially_paid';
-    }
-    
-    transaction.updatedAt = paidAt;
     return toTransactionApi(transaction);
   }
   
-  return null; 
+  // Update Supabase if enabled
+  return await saveTransaction(transaction);
 }
 
 async function saveTransaction(transaction) {
