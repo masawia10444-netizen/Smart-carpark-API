@@ -4,13 +4,13 @@ function toMemberApi(row) {
   if (!row) return null;
   return {
     id: row.id,
+    username: row.username,
     firstName: row.firstName || '',
     lastName: row.lastName || '',
-    // fullName: row.name || `${row.firstName} ${row.lastName}`,
     email: row.email,
     phone: row.phone || '',
     role: row.role,
-    status: row.status, // 'active' or 'inactive'
+    status: row.status,
     permissions: row.permissions || [],
     createdAt: row.createdAt,
     updatedAt: row.updatedAt
@@ -50,9 +50,10 @@ async function getMemberStats() {
 async function createMember(data) {
   const newMember = {
     id: createId('u'),
+    username: data.username || data.email?.split('@')[0] || createId('user'), // Fallback to email prefix or random ID
     firstName: data.firstName,
     lastName: data.lastName,
-    name: `${data.firstName} ${data.lastName}`,
+    name: data.name || `${data.firstName || ''} ${data.lastName || ''}`.trim(),
     email: data.email,
     password: data.password || '123456',
     phone: data.phone,
