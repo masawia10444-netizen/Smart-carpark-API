@@ -65,29 +65,58 @@ Authorization: Bearer <token>
 
 ---
 
-## API Summary (V1)
+## API Summary (Comprehensive List)
 
-### 🔑 Auth
-- `POST /api/v1/auth/login` - เข้าสู่ระบบ (คืนค่าโปรไฟล์และ Permissions)
-- `POST /api/v1/auth/logout`
-- `GET /api/v1/auth/me` - ตรวจสอบข้อมูลผู้ใช้งานไอดีปัจจุบัน
+### 🔑 Authentication (`/api/v1/auth`)
+- `POST /login` - เข้าสู่ระบบ (คืนค่า Profile + Token + Permissions)
+- `POST /logout` - ออกจากระบบ
+- `POST /refresh` - รีเฟรช Token
+- `GET /me` - ตรวจสอบข้อมูลผู้ใช้ปัจจุบัน
 
-### 📊 Dashboard
-- `GET /api/v1/dashboard` - สถิติรายวันแบบ Real-time
+### 📊 Dashboard & Overview
+- `GET /api/v1/dashboard` - สรุปยอดขาย Real-time วันนี้ (การคำนวณรายวิทยุ)
+- `GET /api/v1/overview/summary` - รายงานสรุปเชิงวิเคราะห์ตามช่วงเวลา (Grand Totals)
 
-### 🔍 Transactions (Parking Operations)
-- `GET /api/v1/transactions` - ค้นหารายการรถ (ทะเบียน/เลขบิล)
-- `POST /api/v1/transactions/:id/payment` - ยืนยันการรับชำระเงิน
-- `PATCH /api/v1/transactions/:id` - แก้ไขข้อมูลรถ (กรณีกล้องอ่านผิด)
+### 🚗 Transactions (Parking Operations) (`/api/v1/transactions`)
+- `GET /` - ค้นหาและดูรายการรถทั้งหมด (Query: `keyword`, `plateNo`, `billNo`, `status`)
+- `GET /:id` - ดูรายละเอียดบิลและประวัติการจ่ายเงิน
+- `POST /:id/payment` - บันทึกการชำระเงิน (คำนวณ Overstay และ Grace Period อัตโนมัติ)
+- `PATCH /:id` - แก้ไขทะเบียนรถ/สถานะ (กรณี LPR อ่านผิด)
+- `DELETE /:id` - ลบบิลรายการจอด
 
-### 👥 Members (Management - Super Admin Only)
-- `GET /api/v1/members` - จัดการพนักงานทั้งหมด
-- `PATCH /api/v1/members/:id/permissions` - อัปเดตสิทธิ์การใช้งาน (ใช้ Permission Keys ด้านบน)
+### 👥 Member Management (`/api/v1/members`)
+- `GET /stats` - ดูสถิติจำนวนพนักงาน
+- `GET /` - รายชื่อพนักงานทั้งหมด
+- `POST /` - เพิ่มพนักงานใหม่ (+ กำหนดรหัสผ่านครั้งแรก)
+- `PATCH /:id` - แก้ไขโปรไฟล์พนักงาน
+- `PATCH /:id/permissions` - กำหนดสิธิ์ (Permission Keys) รายบุคคล
+- `DELETE /:id` - ลบพนักงาน
 
-### ⚙️ Settings & Pricing
-- `GET/POST/PATCH /api/v1/service-pricing/rules` - กฎราคาค่าจอด
-- `GET/PATCH /api/v1/payment-settings/methods` - เปิด/ปิด ช่องทางรับเงิน
-- `GET/PUT /api/v1/devices/config` - จัดการอุปกรณ์
+### 💰 Service Pricing (`/api/v1/service-pricing`)
+- `GET /config` - ดูการตั้งค่ากฎราคาและประเภทรถทั้งหมด
+- `PUT /config` - แก้ไขกฎราคา/ประเภทรถ/เวลาผ่อนปรน (Grace Period)
+
+### 💳 Payment Settings (`/api/v1/payment-settings`)
+- `GET /methods` - ดูรายการช่องทางชำระเงิน (Cash, QR, Bank)
+- `PATCH /methods/:id` - เปิด/ปิด ช่องทางการจ่ายเงิน
+- `GET /channels` - ดูข้อมูลจุดบริการ (Kiosk, Cashier, Gate)
+- `PATCH /channels/:id` - จับคู่ (Mapping) ช่องทางจ่ายเงินกับจุดบริการ
+
+### ⚙️ System & Device Settings
+- `GET /api/v1/devices/config` - ดูสถานะและรายชื่ออุปกรณ์ (LPR, Printer, Gate)
+- `PUT /api/v1/devices/:id` - แก้ไขข้อมูลอุปกรณ์
+- `GET /api/v1/theme` - ดึงข้อมูลสี โลโก้ และธีมระบบ
+- `PUT /api/v1/theme` - อัปเดตธีม
+- `GET /api/v1/system-settings` - ดึงการตั้งค่าระบบ (รวมถึงการตั้งค่าใบเสร็จ)
+- `PUT /api/v1/system-settings` - อัปเดตการแสดงผลในบิล/ระบบทั่วไป
+
+---
+
+## 🛠 การตรวจสอบสิทธิ์ (Security Workflow)
+พนักงาน (Staff) ที่จะเข้าถึง API ด้านบนได้ **ต้องได้รับสิทธิ์ (Permissions)** ที่ตรงกับฟังก์ชันนั้นๆ เช่น:
+- จะเรียก `/api/v1/dashboard` ได้ ต้องมีสิทธิ์ `dashboard`
+- จะเรียก `/api/v1/service-pricing` ได้ ต้องมีสิทธิ์ `pricing`
+- **Super Admin** สามารถเรียกได้ทุกเส้นโดยไม่ต้องตรวจสอบสิทธิ์แยกรายเมนู
 
 ---
 
