@@ -3470,17 +3470,26 @@ const store = {
   "systemSettings": {
     "general": {
       "systemName": "Smart Carpark",
+      "location": "อาคารผู้โดยสาร A-12",
       "language": "th",
       "timezone": "Asia/Bangkok"
     },
     "receipt": {
+      "entryBill": {
+        "showDate": true,
+        "showEntryTime": true,
+        "showQrCode": true,
+        "showBillNo": true
+      },
+      "paymentBill": {
+        "showDate": true,
+        "showEntryTime": true,
+        "showQrCode": true,
+        "showBillNo": true,
+        "showExpiryTime": true,
+        "expiryDuration": 15
+      },
       "paperWidth": "80mm",
-      "fontSize": 12,
-      "marginTop": 4,
-      "marginBottom": 4,
-      "showQr": true,
-      "showBillNo": true,
-      "showExpiredTime": true,
       "footerText": "ขอบคุณที่ใช้บริการ"
     },
     "billing": {

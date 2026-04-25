@@ -14,19 +14,60 @@ function toNumberOrNull(value) {
 
 function toTransactionApi(row) {
   if (!row) return null;
-  
   const pricingRules = store.pricingConfig?.pricingRules || [];
   const entryAt = row.entry_at ?? row.entryAt;
-  const exitAt = row.exit_at ?? row.exitAt;
+  const now = new Date();
+  let cutoffAt = row.exit_at ?? row.exitAt;
+  let isOverstay = false;
+
+  // Overstay Logic:
+  // If car is still inside and it's already past the exitTimeLimit
+  if (!cutoffAt && row.exitTimeLimit && now > new Date(row.exitTimeLimit)) {
+    isOverstay = true;
+    cutoffAt = now.toISOString(); // Use current time to calculate the extra fees
+  } 
+  // Standard Cutoff: If car is inside but not overstayed, use payment time or now
+  else if (!cutoffAt) {
+    if (row.status === 'completed' && row.payments?.length > 0) {
+      const latestPayment = [...row.payments].sort((a,b) => new Date(b.paidAt) - new Date(a.paidAt))[0];
+      cutoffAt = latestPayment.paidAt;
+    } else {
+      cutoffAt = now.toISOString();
+    }
+  }
+
+  const exitAt = cutoffAt;
   
-  const feeResult = calculateFee(entryAt, exitAt || new Date().toISOString(), pricingRules, {
+  const feeResult = calculateFee(entryAt, exitAt, pricingRules, {
     vehicleType: row.vehicle_type || row.vehicleType,
     serviceType: row.service_type || row.serviceType
   });
 
   const netAmount = feeResult.totalAmount;
   const totalPaid = row.totalPaid || 0;
-  const status = row.status;
+  const remainingAmount = Math.max(0, netAmount - totalPaid);
+  
+  // Final status determination for API
+  let finalStatus = row.status;
+  if (remainingAmount > 0) {
+    finalStatus = totalPaid > 0 ? 'partially_paid' : 'pending';
+  }
+
+  return {
+    id: row.id,
+    billNo: row.bill_no ?? row.billNo,
+    plateNo: row.plate_no ?? row.plateNo,
+    vehicleType: row.vehicle_type ?? row.vehicleType,
+    serviceType: row.service_type ?? row.serviceType,
+    entryAt,
+    exitAt: row.exit_at ?? row.exitAt,
+    calculatedAt: exitAt,
+    exitTimeLimit: row.exitTimeLimit || null,
+    isOverstay,
+    status: finalStatus,
+    netAmount,
+    totalPaid,
+    remainingAmount,
 
   // 1. Format Date: DD-MM-YYYY
   const entryDate = new Date(entryAt);
@@ -154,15 +195,16 @@ async function processPayment(id, { method, channel, amount, processedBy }) {
   const transaction = await getTransactionById(id);
   if (!transaction) return null;
 
+  // Get grace period from receipt settings (as shown in UI) or pricing config
+  const gracePeriodMinutes = store.systemSettings?.receipt?.paymentBill?.expiryDuration || store.pricingConfig?.gracePeriod || 15;
   const paidAt = new Date().toISOString();
-  const gracePeriodMinutes = 15;
   const expiryAt = new Date(new Date(paidAt).getTime() + gracePeriodMinutes * 60000).toISOString();
 
   const newPayment = {
     id: `pay_${Date.now()}`,
     method: method || 'cash',
     channel: channel || 'cashier',
-    amount: amount || (transaction.netAmount - (transaction.totalPaid || 0)),
+    amount: amount || (transaction.remainingAmount || 0),
     paidAt,
     expiryAt,
     processedBy: processedBy || 'u1'
@@ -171,20 +213,26 @@ async function processPayment(id, { method, channel, amount, processedBy }) {
   transaction.payments = transaction.payments || [];
   transaction.payments.push(newPayment);
   transaction.totalPaid = (transaction.totalPaid || 0) + newPayment.amount;
-  
-  if (transaction.totalPaid >= (transaction.netAmount || 0)) {
+  transaction.updatedAt = paidAt;
+
+  // SPECIAL CASE: For Gate Payment, we treat it as immediate exit
+  if (channel === 'gate') {
+    transaction.exitTimeLimit = paidAt; // No grace period needed
+    transaction.exitAt = paidAt;        // Record actual exit time now
     transaction.status = 'completed';
   } else {
-    transaction.status = 'partially_paid';
+    transaction.exitTimeLimit = expiryAt; // Standard grace period
+    if (transaction.totalPaid >= (transaction.netAmount || 0)) {
+      transaction.status = 'completed';
+    } else {
+      transaction.status = 'partially_paid';
+    }
   }
-  
-  transaction.updatedAt = paidAt;
 
   if (!isSupabaseEnabled) {
     return toTransactionApi(transaction);
   }
   
-  // Update Supabase if enabled
   return await saveTransaction(transaction);
 }
 
