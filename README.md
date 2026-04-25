@@ -107,8 +107,10 @@ Authorization: Bearer <token>
 - `PUT /api/v1/devices/:id` - แก้ไขข้อมูลอุปกรณ์
 - `GET /api/v1/theme` - ดึงข้อมูลสี โลโก้ และธีมระบบ
 - `PUT /api/v1/theme` - อัปเดตธีม
-- `GET /api/v1/system-settings` - ดึงการตั้งค่าระบบ (รวมถึงการตั้งค่าใบเสร็จ)
-- `PUT /api/v1/system-settings` - อัปเดตการแสดงผลในบิล/ระบบทั่วไป
+- `GET /api/v1/system-settings` - ดึงการตั้งค่าระบบทั่วไป
+- `PUT /api/v1/system-settings` - อัปเดตการตั้งค่าระบบทั่วไป
+- `GET /api/v1/system-settings/receipt` - **[NEW]** ดึงการตั้งค่าการแสดงผลใบแจ้งหนี้ (บิลเข้า/บิลหลังชำระ)
+- `PUT /api/v1/system-settings/receipt` - **[NEW]** อัปเดตสิทธิ์การแสดงผลฟิลด์และเวลาหมดอายุในบิล
 
 ---
 

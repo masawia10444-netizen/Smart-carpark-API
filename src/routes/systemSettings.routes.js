@@ -8,10 +8,42 @@ const CONFIG_KEY = 'system_settings';
 
 router.use(authorize(['super_admin', 'staff'], 'settings'));
 
-router.get('/', async (req, res, next) => {
+router.get('/receipt', async (req, res, next) => {
   try {
     const settings = await getConfig(CONFIG_KEY, store.systemSettings);
-    res.json(settings);
+    res.json(settings.receipt || {});
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put('/receipt', async (req, res, next) => {
+  try {
+    const body = req.body || {};
+    const current = await getConfig(CONFIG_KEY, store.systemSettings);
+    
+    // Deep merge for receipt sub-objects
+    const newReceipt = {
+      ...current.receipt,
+      ...body,
+      entryBill: {
+        ...(current.receipt?.entryBill || {}),
+        ...(body.entryBill || {})
+      },
+      paymentBill: {
+        ...(current.receipt?.paymentBill || {}),
+        ...(body.paymentBill || {})
+      }
+    };
+
+    const nextSettings = {
+      ...current,
+      receipt: newReceipt,
+      updatedAt: new Date().toISOString()
+    };
+
+    const saved = await setConfig(CONFIG_KEY, nextSettings);
+    res.json({ message: 'Receipt settings updated', receipt: saved.receipt });
   } catch (err) {
     next(err);
   }
@@ -22,18 +54,8 @@ router.put('/', async (req, res, next) => {
     const body = req.body || {};
     const current = await getConfig(CONFIG_KEY, store.systemSettings);
     const nextSettings = {
-      general: {
-        ...current.general,
-        ...(body.general || {})
-      },
-      receipt: {
-        ...current.receipt,
-        ...(body.receipt || {})
-      },
-      billing: {
-        ...current.billing,
-        ...(body.billing || {})
-      },
+      ...current,
+      ...body,
       updatedAt: new Date().toISOString()
     };
 
