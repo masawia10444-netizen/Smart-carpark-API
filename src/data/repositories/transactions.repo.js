@@ -78,6 +78,7 @@ function toTransactionApi(row) {
     exitTimeLimit: row.exitTimeLimit || null,
     isOverstay,
     status: finalStatus,
+    baseAmount: row.amount ?? feeResult.totalAmount,
     netAmount,
     totalPaid,
     remainingAmount,
@@ -85,7 +86,7 @@ function toTransactionApi(row) {
     durationMinute: Math.floor(durationMs / 60000),
     payments: (row.payments || []).map(p => ({
       ...p,
-      amount: toNumberOrNull(p.amount)
+      paidAmount: toNumberOrNull(p.amount ?? p.paidAmount)
     })),
     createdAt: row.createdAt || row.entry_at || entryAt,
     updatedAt: row.updatedAt || row.exit_at || entryAt
@@ -206,7 +207,7 @@ async function processPayment(id, { method, channel, amount, processedBy }) {
       id: `pay_${Date.now()}`,
       method: method || 'cash',
       channel: channel || 'cashier',
-      amount: payAmount,
+      paidAmount: payAmount,
       paidAt,
       expiryAt,
       processedBy: processedBy || 'u1'
@@ -214,7 +215,7 @@ async function processPayment(id, { method, channel, amount, processedBy }) {
 
     transaction.payments = transaction.payments || [];
     transaction.payments.push(newPayment);
-    transaction.totalPaid = (transaction.totalPaid || 0) + newPayment.amount;
+    transaction.totalPaid = (transaction.totalPaid || 0) + newPayment.paidAmount;
     transaction.updatedAt = paidAt;
 
     // 3. Update Exit Limit and Status

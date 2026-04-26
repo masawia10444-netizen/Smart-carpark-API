@@ -31,13 +31,13 @@ router.get('/', async (req, res, next) => {
 
     // Middle Section: Revenue Groups (Staff vs Scan)
     const cashierPayments = paidToday.flatMap(t => t.payments || []).filter(p => p.channel === 'cashier');
-    const totalCashToday = cashierPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const totalCashToday = cashierPayments.reduce((sum, p) => sum + (p.paidAmount || 0), 0);
     const myCashToday = cashierPayments
       .filter((p) => p.processedBy === currentUserId)
-      .reduce((sum, p) => sum + (p.amount || 0), 0);
+      .reduce((sum, p) => sum + (p.paidAmount || 0), 0);
     
     const epayPayments = paidToday.flatMap(t => t.payments || []).filter(p => p.channel !== 'cashier');
-    const totalEpayToday = epayPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const totalEpayToday = epayPayments.reduce((sum, p) => sum + (p.paidAmount || 0), 0);
 
 
     const revenueGroups = [
@@ -55,7 +55,7 @@ router.get('/', async (req, res, next) => {
 
     const channelBreakdown = channels.map((ch) => {
       const filteredPayments = paidToday.flatMap(t => t.payments || []).filter(p => p.channel === ch.code);
-      const amount = filteredPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+      const amount = filteredPayments.reduce((sum, p) => sum + (p.paidAmount || 0), 0);
       return {
         ...ch,
         amount,

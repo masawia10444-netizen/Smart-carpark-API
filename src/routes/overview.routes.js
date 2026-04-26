@@ -32,8 +32,8 @@ router.get('/summary', async (req, res, next) => {
 
     // 3. Middle Section: Revenue Groups (%)
     const allRecentPayments = paidList.flatMap(t => t.payments || []);
-    const cashTotal = allRecentPayments.filter((p) => p.channel === 'cashier').reduce((sum, p) => sum + (p.amount || 0), 0);
-    const epayTotal = allRecentPayments.filter((p) => p.channel !== 'cashier').reduce((sum, p) => sum + (p.amount || 0), 0);
+    const cashTotal = allRecentPayments.filter((p) => p.channel === 'cashier').reduce((sum, p) => sum + (p.paidAmount || 0), 0);
+    const epayTotal = allRecentPayments.filter((p) => p.channel !== 'cashier').reduce((sum, p) => sum + (p.paidAmount || 0), 0);
 
 
     const revenueGroups = [
@@ -98,8 +98,8 @@ router.get('/summary', async (req, res, next) => {
     const serviceSummary = [
         { id: 'cashier', label: 'เงินสด (Cashier)', amount: cashTotal, count: allRecentPayments.filter(p => p.channel === 'cashier').length, percent: totalRevenue > 0 ? Math.round((cashTotal / totalRevenue) * 100) : 0, icon: 'cash' },
         { id: 'epayment', label: 'E-payment', amount: epayTotal, count: allRecentPayments.filter(p => p.channel !== 'cashier').length, percent: totalRevenue > 0 ? Math.round((epayTotal / totalRevenue) * 100) : 0, icon: 'qr' },
-        { id: 'kiosk', label: 'Kiosk', amount: allRecentPayments.filter(p => p.channel === 'kiosk').reduce((s, p) => s + (p.amount || 0), 0), count: allRecentPayments.filter(p => p.channel === 'kiosk').length, percent: 12, icon: 'kiosk' }, 
-        { id: 'gate', label: 'หน้าทางออก', amount: allRecentPayments.filter(p => p.channel === 'gate').reduce((s, p) => s + (p.amount || 0), 0), count: allRecentPayments.filter(p => p.channel === 'gate').length, percent: 4, icon: 'gate' }
+        { id: 'kiosk', label: 'Kiosk', amount: allRecentPayments.filter(p => p.channel === 'kiosk').reduce((s, p) => s + (p.paidAmount || 0), 0), count: allRecentPayments.filter(p => p.channel === 'kiosk').length, percent: 12, icon: 'kiosk' }, 
+        { id: 'gate', label: 'หน้าทางออก', amount: allRecentPayments.filter(p => p.channel === 'gate').reduce((s, p) => s + (p.paidAmount || 0), 0), count: allRecentPayments.filter(p => p.channel === 'gate').length, percent: 4, icon: 'gate' }
     ];
 
 
