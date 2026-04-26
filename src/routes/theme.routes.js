@@ -1,10 +1,37 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
 const { store } = require('../data/store');
 const { getConfig, setConfig } = require('../data/repositories/config.repo');
 const { authorize } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 const CONFIG_KEY = 'theme';
+
+// Configure Multer Storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'logo-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // Limit 2MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|svg|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (extname && mimetype) {
+      return cb(null, true);
+    }
+    cb(new Error('Only images (jpg, png, svg, webp) are allowed!'));
+  }
+});
 
 router.use(authorize(['super_admin', 'staff'], 'theme'));
 
@@ -27,6 +54,35 @@ router.put('/', async (req, res, next) => {
     };
     const saved = await setConfig(CONFIG_KEY, nextTheme);
     res.json({ message: 'Theme updated', theme: saved });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// New Logo Upload Endpoint
+router.post('/upload-logo', upload.single('logo'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Please upload a file' });
+    }
+
+    const logoUrl = `/uploads/${req.file.filename}`;
+    const current = await getConfig(CONFIG_KEY, store.theme);
+    
+    // Auto-update theme with new logo URL
+    const nextTheme = {
+      ...current,
+      logoUrl: logoUrl,
+      updatedAt: new Date().toISOString()
+    };
+    
+    const saved = await setConfig(CONFIG_KEY, nextTheme);
+    
+    res.json({ 
+      message: 'Logo uploaded successfully', 
+      logoUrl: logoUrl,
+      theme: saved 
+    });
   } catch (err) {
     next(err);
   }

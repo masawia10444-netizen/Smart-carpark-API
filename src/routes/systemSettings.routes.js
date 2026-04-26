@@ -8,6 +8,15 @@ const CONFIG_KEY = 'system_settings';
 
 router.use(authorize(['super_admin', 'staff'], 'settings'));
 
+router.get('/', async (req, res, next) => {
+  try {
+    const settings = await getConfig(CONFIG_KEY, store.systemSettings);
+    res.json(settings);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/receipt', async (req, res, next) => {
   try {
     const settings = await getConfig(CONFIG_KEY, store.systemSettings);
