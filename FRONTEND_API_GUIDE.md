@@ -10,6 +10,9 @@
 Authorization: Bearer <your_token>
 ```
 - **Login**: `POST /api/v1/auth/login`
+- **Refresh Token**: `POST /api/v1/auth/refresh`
+    - **Payload**: `{ "refreshToken": "..." }`
+    - **การใช้งาน**: ใช้สำหรับขอ Access Token ชุดใหม่เมื่อชุดเดิมหมดอายุ
 - **สิทธิ์การใช้งาน**: หลัง Login จะได้รับ `user.permissions` (เช่น `dashboard`, `transactions`) เพื่อใช้ควบคุมการแสดงผลเมนู
 
 ---
