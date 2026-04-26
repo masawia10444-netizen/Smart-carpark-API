@@ -1,8 +1,0 @@
-{
-  "username": "test_user",
-  "password": "password456",
-  "name": "Test User Successfully",
-  "email": "test@example.com",
-  "role": "staff",
-  "permissions": ["dashboard.view"]
-}

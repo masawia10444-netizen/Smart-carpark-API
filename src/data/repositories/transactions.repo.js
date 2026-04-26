@@ -53,6 +53,19 @@ function toTransactionApi(row) {
     finalStatus = totalPaid > 0 ? 'partially_paid' : 'pending';
   }
 
+  // 1. Format Date: DD-MM-YYYY
+  const entryDate = new Date(entryAt);
+  const day = String(entryDate.getDate()).padStart(2, '0');
+  const month = String(entryDate.getMonth() + 1).padStart(2, '0');
+  const year = entryDate.getFullYear();
+  const dateFormatted = `${day}-${month}-${year}`;
+
+  // 2. Format Duration: H : m
+  const durationMs = feeResult.durationMs;
+  const hrs = Math.floor(durationMs / (1000 * 60 * 60));
+  const mins = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+  const durationFormatted = `${hrs} : ${mins}`;
+
   return {
     id: row.id,
     billNo: row.bill_no ?? row.billNo,
@@ -68,42 +81,14 @@ function toTransactionApi(row) {
     netAmount,
     totalPaid,
     remainingAmount,
-
-  // 1. Format Date: DD-MM-YYYY
-  const entryDate = new Date(entryAt);
-  const day = String(entryDate.getDate()).padStart(2, '0');
-  const month = String(entryDate.getMonth() + 1).padStart(2, '0');
-  const year = entryDate.getFullYear();
-  const dateFormatted = `${day}-${month}-${year}`;
-
-  // 2. Format Duration: H : m
-  const durationMs = feeResult.durationMs;
-  const hrs = Math.floor(durationMs / (1000 * 60 * 60));
-  const mins = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-  const durationFormatted = `${hrs} : ${mins}`;
-
-  const serviceDisplay = `${dateFormatted} | ${durationFormatted}`;
-
-  return {
-    id: row.id,
-    billNo: row.bill_no ?? row.billNo,
-    plateNo: row.plate_no ?? row.plateNo,
-    vehicleType: row.vehicle_type ?? row.vehicleType,
-    serviceType: row.service_type ?? row.serviceType,
-    entryAt,
-    exitAt,
-    serviceDisplay,
+    serviceDisplay: `${dateFormatted} | ${durationFormatted}`,
     durationMinute: Math.floor(durationMs / 60000),
-    amount: row.amount ?? netAmount,
-    netAmount: netAmount,
-    status,
-    statusLabel: status === 'pending' ? 'รอชำระ' : status === 'completed' ? 'เสร็จสิ้น' : (status === 'partially_paid' ? 'ชำระบางส่วน' : 'ยกเลิก'),
-    payments: row.payments || [],
-    totalPaid: totalPaid,
-    outstandingBalance: Math.max(0, netAmount - totalPaid),
-    receipt: row.receipt || {},
-    createdAt: row.created_at ?? row.createdAt,
-    updatedAt: row.updated_at ?? row.updatedAt
+    payments: (row.payments || []).map(p => ({
+      ...p,
+      amount: toNumberOrNull(p.amount)
+    })),
+    createdAt: row.createdAt || row.entry_at || entryAt,
+    updatedAt: row.updatedAt || row.exit_at || entryAt
   };
 }
 
@@ -188,52 +173,78 @@ async function getTransactionById(id) {
 
   const { data, error } = await supabase.from('transactions').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
-  return toTransactionApi(data);
+  return data;
 }
 
 async function processPayment(id, { method, channel, amount, processedBy }) {
-  const transaction = await getTransactionById(id);
-  if (!transaction) return null;
+  console.log('--- processPayment START ---', { id, method, channel, amount });
+  try {
+    const transaction = await getTransactionById(id);
+    if (!transaction) {
+      console.log('❌ Transaction not found');
+      return null;
+    }
 
-  // Get grace period from receipt settings (as shown in UI) or pricing config
-  const gracePeriodMinutes = store.systemSettings?.receipt?.paymentBill?.expiryDuration || store.pricingConfig?.gracePeriod || 15;
-  const paidAt = new Date().toISOString();
-  const expiryAt = new Date(new Date(paidAt).getTime() + gracePeriodMinutes * 60000).toISOString();
+    // 1. Calculate current fee again to get fresh netAmount
+    const pricingRules = store.pricingConfig?.pricingRules || [];
+    const entryAt = transaction.entry_at || transaction.entryAt;
+    const now = new Date().toISOString();
+    
+    console.log('Calculating Fee for:', { entryAt, now, vehicleType: transaction.vehicleType || transaction.vehicle_type });
+    const feeResult = calculateFee(entryAt, now, pricingRules, {
+      vehicleType: transaction.vehicleType || transaction.vehicle_type,
+      serviceType: transaction.serviceType || transaction.service_type
+    });
+    console.log('✅ Fee calculated:', feeResult.totalAmount);
 
-  const newPayment = {
-    id: `pay_${Date.now()}`,
-    method: method || 'cash',
-    channel: channel || 'cashier',
-    amount: amount || (transaction.remainingAmount || 0),
-    paidAt,
-    expiryAt,
-    processedBy: processedBy || 'u1'
-  };
+    const currentNetAmount = feeResult.totalAmount;
+    const currentTotalPaid = transaction.totalPaid || 0;
+    const currentRemaining = Math.max(0, currentNetAmount - currentTotalPaid);
 
-  transaction.payments = transaction.payments || [];
-  transaction.payments.push(newPayment);
-  transaction.totalPaid = (transaction.totalPaid || 0) + newPayment.amount;
-  transaction.updatedAt = paidAt;
+    // 2. Setup Expiry
+    const gracePeriodMinutes = store.systemSettings?.receipt?.paymentBill?.expiryDuration || store.pricingConfig?.gracePeriod || 15;
+    const paidAt = now;
+    const expiryAt = new Date(new Date(paidAt).getTime() + gracePeriodMinutes * 60000).toISOString();
 
-  // SPECIAL CASE: For Gate Payment, we treat it as immediate exit
-  if (channel === 'gate') {
-    transaction.exitTimeLimit = paidAt; // No grace period needed
-    transaction.exitAt = paidAt;        // Record actual exit time now
-    transaction.status = 'completed';
-  } else {
-    transaction.exitTimeLimit = expiryAt; // Standard grace period
-    if (transaction.totalPaid >= (transaction.netAmount || 0)) {
+    const payAmount = amount !== undefined ? Number(amount) : currentRemaining;
+
+    const newPayment = {
+      id: `pay_${Date.now()}`,
+      method: method || 'cash',
+      channel: channel || 'cashier',
+      amount: payAmount,
+      paidAt,
+      expiryAt,
+      processedBy: processedBy || 'u1'
+    };
+
+    transaction.payments = transaction.payments || [];
+    transaction.payments.push(newPayment);
+    transaction.totalPaid = (transaction.totalPaid || 0) + newPayment.amount;
+    transaction.updatedAt = paidAt;
+
+    // 3. Update Exit Limit and Status
+    if (channel === 'gate') {
+      transaction.exitTimeLimit = paidAt;
+      transaction.exitAt = paidAt;
       transaction.status = 'completed';
     } else {
-      transaction.status = 'partially_paid';
+      transaction.exitTimeLimit = expiryAt;
+      if (transaction.totalPaid >= currentNetAmount) {
+        transaction.status = 'completed';
+      } else {
+        transaction.status = 'partially_paid';
+      }
     }
-  }
 
-  if (!isSupabaseEnabled) {
-    return toTransactionApi(transaction);
+    console.log('Update Complete, transforming response...');
+    const result = toTransactionApi(transaction);
+    console.log('✅ processPayment SUCCESS');
+    return result;
+  } catch (err) {
+    console.error('❌ processPayment CRASHED:', err);
+    throw err;
   }
-  
-  return await saveTransaction(transaction);
 }
 
 async function saveTransaction(transaction) {
@@ -332,6 +343,7 @@ module.exports = {
   listTransactions,
   listAllTransactions,
   getTransactionById,
+  processPayment,
   saveTransaction,
   updateTransaction,
   deleteTransaction

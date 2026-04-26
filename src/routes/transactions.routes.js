@@ -1,5 +1,6 @@
+console.log('--- TRANSACTIONS ROUTE LOADED ---');
 const express = require('express');
-const { listTransactions, getTransactionById, saveTransaction, updateTransaction, deleteTransaction } = require('../data/repositories/transactions.repo');
+const { listTransactions, getTransactionById, processPayment, saveTransaction, updateTransaction, deleteTransaction } = require('../data/repositories/transactions.repo');
 const { authorize } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
@@ -48,28 +49,22 @@ router.get('/:id', async (req, res, next) => {
 
 router.post('/:id/payment', async (req, res, next) => {
   try {
-    const { method, channel, printReceipt } = req.body;
-    const transaction = await getTransactionById(req.params.id);
+    const { method, channel, amount } = req.body;
+    const processedBy = req.user?.id || 'u1';
+    
+    const updated = await processPayment(req.params.id, { 
+      method, 
+      channel, 
+      amount, 
+      processedBy 
+    });
 
-    if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
-
-    const updates = {
-      status: 'completed',
-      payment: {
-        status: 'paid',
-        method: method || 'cash',
-        channel: channel || 'cashier',
-        processedBy: req.user?.id || 'u1',
-        paidAt: new Date().toISOString()
-      },
-      receipt: {
-        printed: !!printReceipt,
-        printedAt: printReceipt ? new Date().toISOString() : null
-      }
-    };
-
-    const updated = await updateTransaction(req.params.id, updates);
-    res.json({ message: 'Payment confirmed successfully', transaction: updated });
+    if (!updated) return res.status(404).json({ message: 'Transaction not found' });
+    
+    res.json({ 
+      message: 'Payment confirmed successfully', 
+      transaction: updated 
+    });
   } catch (err) {
     next(err);
   }

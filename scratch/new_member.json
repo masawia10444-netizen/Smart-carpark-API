@@ -1,8 +1,0 @@
-{
-  "username": "new_staff",
-  "password": "password123",
-  "name": "New Staff Member",
-  "email": "new.staff@example.com",
-  "role": "staff",
-  "permissions": ["dashboard.view", "transaction.manage"]
-}
