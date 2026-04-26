@@ -54,7 +54,29 @@ Authorization: Bearer <your_token>
 
 ---
 
-## 📜 4. การแสดงผลใบเสร็จ (Receipt Settings)
+## 👥 5. ระบบจัดการสมาชิก (Members)
+ใช้สำหรับการจัดการพนักงานและสิทธิ์การเข้าถึง:
+
+### 📊 สถิติจำนวนพนักงาน
+- **Endpoint**: `GET /api/v1/members/stats`
+- **การใช้งาน**: ใช้แสดงตัวเลขสรุปในหน้า Dashboard หรือหน้าจัดการสมาชิก
+
+### 🛠️ การจัดการรายชื่อและสิทธิ์
+- **List All**: `GET /api/v1/members`
+- **Update Profile**: `PATCH /api/v1/members/:id`
+- **Update Permissions**: `PATCH /api/v1/members/:id/permissions`
+    - **Payload**: `{ "permissions": ["dashboard", "transactions", ...] }`
+
+---
+
+## 💰 6. ตั้งค่ากฎราคา (Service Pricing)
+- **Get Config**: `GET /api/v1/service-pricing/config`
+- **Update Config**: `PUT /api/v1/service-pricing/config`
+    - **Payload**: สามารถส่งก้อน `pricingRules` หรือ `gracePeriod` ที่แก้ไขแล้วกลับไปเซิร์ฟเวอร์ได้ทันที
+
+---
+
+## 📜 7. การแสดงผลใบเสร็จ (Receipt Settings)
 **Endpoint**: `GET /api/v1/system-settings/receipt`
 Front-end ต้องใช้ข้อมูลจากที่นี่ในการ "วาด" (Render) หน้าพรีวิวใบเสร็จ:
 - `entryBill`: สิทธิ์การโชว์ฟิลด์ในบิลขาเข้า

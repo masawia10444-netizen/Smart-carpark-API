@@ -1,4 +1,3 @@
-console.log('--- TRANSACTIONS ROUTE LOADED ---');
 const express = require('express');
 const { listTransactions, getTransactionById, processPayment, saveTransaction, updateTransaction, deleteTransaction } = require('../data/repositories/transactions.repo');
 const { authorize } = require('../middlewares/auth.middleware');

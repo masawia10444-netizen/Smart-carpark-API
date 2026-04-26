@@ -177,25 +177,19 @@ async function getTransactionById(id) {
 }
 
 async function processPayment(id, { method, channel, amount, processedBy }) {
-  console.log('--- processPayment START ---', { id, method, channel, amount });
   try {
     const transaction = await getTransactionById(id);
-    if (!transaction) {
-      console.log('❌ Transaction not found');
-      return null;
-    }
+    if (!transaction) return null;
 
     // 1. Calculate current fee again to get fresh netAmount
     const pricingRules = store.pricingConfig?.pricingRules || [];
     const entryAt = transaction.entry_at || transaction.entryAt;
     const now = new Date().toISOString();
     
-    console.log('Calculating Fee for:', { entryAt, now, vehicleType: transaction.vehicleType || transaction.vehicle_type });
     const feeResult = calculateFee(entryAt, now, pricingRules, {
       vehicleType: transaction.vehicleType || transaction.vehicle_type,
       serviceType: transaction.serviceType || transaction.service_type
     });
-    console.log('✅ Fee calculated:', feeResult.totalAmount);
 
     const currentNetAmount = feeResult.totalAmount;
     const currentTotalPaid = transaction.totalPaid || 0;
@@ -237,12 +231,8 @@ async function processPayment(id, { method, channel, amount, processedBy }) {
       }
     }
 
-    console.log('Update Complete, transforming response...');
-    const result = toTransactionApi(transaction);
-    console.log('✅ processPayment SUCCESS');
-    return result;
+    return toTransactionApi(transaction);
   } catch (err) {
-    console.error('❌ processPayment CRASHED:', err);
     throw err;
   }
 }
