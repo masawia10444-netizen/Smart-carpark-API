@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { store } = require('../data/store');
 const { getConfig, setConfig } = require('../data/repositories/config.repo');
 const { authorize } = require('../middlewares/auth.middleware');
@@ -69,7 +70,14 @@ router.post('/upload-logo', upload.single('logo'), async (req, res, next) => {
     const logoUrl = `/uploads/${req.file.filename}`;
     const current = await getConfig(CONFIG_KEY, store.theme);
     
-    // Auto-update theme with new logo URL
+    // Optional: Delete old logo file before updating
+    if (current.logoUrl) {
+      const oldPath = path.join(process.cwd(), current.logoUrl);
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+
     const nextTheme = {
       ...current,
       logoUrl: logoUrl,
@@ -83,6 +91,33 @@ router.post('/upload-logo', upload.single('logo'), async (req, res, next) => {
       logoUrl: logoUrl,
       theme: saved 
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// NEW: Delete Logo Endpoint
+router.delete('/logo', async (req, res, next) => {
+  try {
+    const current = await getConfig(CONFIG_KEY, store.theme);
+    
+    if (current.logoUrl) {
+      const filePath = path.join(process.cwd(), current.logoUrl);
+      // Delete physical file
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    // Reset logoUrl in config
+    const nextTheme = {
+      ...current,
+      logoUrl: null,
+      updatedAt: new Date().toISOString()
+    };
+
+    const saved = await setConfig(CONFIG_KEY, nextTheme);
+    res.json({ message: 'Logo deleted and reset successfully', theme: saved });
   } catch (err) {
     next(err);
   }

@@ -46,6 +46,7 @@ Authorization: Bearer <your_token>
 - **📸 อัปโหลดโลโก้**: `POST /api/v1/theme/upload-logo`
     - ใช้ `FormData` ส่งไฟล์ในฟิลด์ชื่อ `logo`
     - จะได้รับ `logoUrl` กลับมาสำหรับนำไปใช้ใน `<img src="...">`
+- **🗑️ ลบโลโก้**: `DELETE /api/v1/theme/logo` (ลบไฟล์จริงออกจากเซิร์ฟเวอร์ทันที)
 
 ---
 
