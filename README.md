@@ -118,6 +118,7 @@ Authorization: Bearer <token>
 - `GET /api/v1/theme` - ดึงข้อมูลสี โลโก้ และธีมระบบ
 - `PUT /api/v1/theme` - อัปเดตธีม (สีหลัก)
 - `POST /api/v1/theme/upload-logo` - **[NEW]** อัปโหลดภาพโลโก้ระบบ (รองรับ jpg, png, svg)
+- `DELETE /api/v1/theme/logo` - **[NEW]** ลบภาพโลโก้ปัจจุบันและรีเซ็ตค่า
 - `GET /api/v1/system-settings` - ดึงการตั้งค่าระบบทั่วไป
 - `PUT /api/v1/system-settings` - อัปเดตการตั้งค่าระบบทั่วไป
 - `GET /api/v1/system-settings/receipt` - **[NEW]** ดึงการตั้งค่าการแสดงผลใบแจ้งหนี้ (บิลเข้า/บิลหลังชำระ)
