@@ -6,10 +6,20 @@
 - **🚀 Dynamic Pricing Engine**: ระบบคิดเงินอัตโนมัติตามระยะเวลา (Step Pricing) รองรับค่าจอดแบบฟรี 1 ชม. แรก หรือราคาขั้นบันได
 - **💸 Incremental Payments & Overstay**: รองรับการชำระเงินหลายครั้ง และคำนวณเงินเพิ่มอัตโนมัติหากจอดเกินเวลาผ่อนปรน (Grace Period)
 - **🔐 Granular RBAC Security**: ระบบความปลอดภัยแบบล็อค 2 ชั้น (Role + Permissions) ตรวจสอบสิทธิ์อย่างเข้มงวด
-- **📋 Receipt Customization**: แอดมินกำหนดได้เองว่าจะแสดงฟิลด์ไหนในใบแจ้งหนี้ (เช่น เวลาหมดอายุในบิลหลังชำระ)
+- **🎨 Custom Branding**: ระบบจัดการธีมที่รองรับการ **อัปโหลดภาพโลโก้ (Logo Upload)** และกำหนดสีหลักขององค์กรได้เองผ่านหลังบ้าน
+- **📈 Advanced Analytics**: หน้า Overview ที่วิเคราะห์ข้อมูลเปรียบเทียบสัดส่วนรายได้แยกตามช่องทาง (Cashier, Kiosk, E-pay, Gate) พร้อมกราฟแสดงสถิติตามช่วงเวลา
+- **📜 Smart Receipt Config**: แอดมินกำหนดได้เองว่าจะแสดงฟิลด์ไหนในใบแจ้งหนี้ และตั้งค่าเวลาผ่อนปรน (Grace Period) หลังชำระเงินได้แบบอิสระ
+- **💸 Accurate Financials**: ปรับปรุงโครงสร้างข้อมูลการเงินใหม่ (`baseAmount`, `netAmount`, `paidAmount`) เพื่อความแม่นยำในการทำบัญชีและลดความสับสนของทีม Frontend
+- **🔐 Granular RBAC Security**: ระบบความปลอดภัยล็อค 2 ชั้น (Role + Permissions) ตรวจสอบสิทธิ์รายเมนูอย่างเข้มงวด
 - **👥 Member Management**: จัดการข้อมูลพนักงานและกำหนดสิทธิ์เข้าถึงเมนูต่างๆ รายบุคคลตามกลุ่มหน้าที่
 - **📸 Transaction Editing**: ฟังก์ชันแก้ไขข้อมูลทะเบียนรถและข้อมูลการจอดกรณีกล้อง LPR อ่านผิด
 - **📦 Mock Data**: ข้อมูลครบถ้วน ทั้งประวัติการจอดจำลองกว่า 50 รายการ และบัญชีพนักงานพร้อมทดสอบ
+
+---
+
+## 📖 คู่มือการเชื่อมต่อสำหรับทีม Frontend
+สำหรับนักพัฒนาฝั่งหน้าบ้าน สามารถศึกษาโครงสร้าง JSON และขั้นตอนการเรียกใช้ API ล่วงหน้าได้ที่:
+👉 **[FRONTEND_API_GUIDE.md](file:///d:/R&D/Smart-Carpark-api/FRONTEND_API_GUIDE.md)**
 
 ---
 
@@ -106,7 +116,8 @@ Authorization: Bearer <token>
 - `GET /api/v1/devices/config` - ดูสถานะและรายชื่ออุปกรณ์ (LPR, Printer, Gate)
 - `PUT /api/v1/devices/:id` - แก้ไขข้อมูลอุปกรณ์
 - `GET /api/v1/theme` - ดึงข้อมูลสี โลโก้ และธีมระบบ
-- `PUT /api/v1/theme` - อัปเดตธีม
+- `PUT /api/v1/theme` - อัปเดตธีม (สีหลัก)
+- `POST /api/v1/theme/upload-logo` - **[NEW]** อัปโหลดภาพโลโก้ระบบ (รองรับ jpg, png, svg)
 - `GET /api/v1/system-settings` - ดึงการตั้งค่าระบบทั่วไป
 - `PUT /api/v1/system-settings` - อัปเดตการตั้งค่าระบบทั่วไป
 - `GET /api/v1/system-settings/receipt` - **[NEW]** ดึงการตั้งค่าการแสดงผลใบแจ้งหนี้ (บิลเข้า/บิลหลังชำระ)
