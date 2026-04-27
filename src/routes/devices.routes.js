@@ -2,6 +2,7 @@ const express = require('express');
 const { store, createId } = require('../data/store');
 const { getConfig, setConfig } = require('../data/repositories/config.repo');
 const { authorize } = require('../middlewares/auth.middleware');
+const { listAllKiosks, generateActivationCode } = require('../data/repositories/kiosks.repo');
 
 const router = express.Router();
 const CONFIG_KEY = 'devices';
@@ -20,6 +21,43 @@ router.get('/config', async (req, res, next) => {
     const config = await getConfig(CONFIG_KEY, store.devices);
     refreshSummary(config);
     res.json(config);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * 🛰️ GET /api/v1/devices/kiosks
+ * เส้นทางใหม่สำหรับแอดมินดูสถานะตู้ Kiosk ทั้งหมด
+ */
+router.get('/kiosks', async (req, res, next) => {
+  try {
+    const kiosks = await listAllKiosks();
+    res.json({
+      total: kiosks.length,
+      online: kiosks.filter(k => k.status === 'online').length,
+      kiosks
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * 🎫 POST /api/v1/devices/kiosks/activation-code
+ * แอดมินออกรหัส 6 หลักเพื่อให้ช่างเอาไปกรอกที่ตู้
+ */
+router.post('/kiosks/activation-code', async (req, res, next) => {
+  try {
+    const { name, location } = req.body;
+    if (!name) return res.status(400).json({ message: 'Kiosk name is required' });
+
+    const code = await generateActivationCode({ name, location });
+    res.json({ 
+      message: 'Activation code generated', 
+      code,
+      expiresIn: '1 hour'
+    });
   } catch (err) {
     next(err);
   }

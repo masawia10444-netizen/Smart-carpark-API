@@ -14,6 +14,7 @@ const usersRoutes = require('./routes/users.routes');
 const memberRoutes = require('./routes/members.routes');
 const servicePricingRoutes = require('./routes/servicePricing.routes');
 const paymentSettingsRouter = require('./routes/paymentSettings.routes');
+const kioskRoutes = require('./routes/kiosk.routes'); // [NEW] Kiosk Routes
 
 const devicesRoutes = require('./routes/devices.routes');
 const themeRoutes = require('./routes/theme.routes');
@@ -27,8 +28,8 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 app.use('/uploads', express.static('uploads'));
-app.use(authMiddleware);
 
+// --- 🌐 Public Routes (No Token Required) ---
 app.get('/', (req, res) => {
   res.json({
     name: 'smart-carpark-api',
@@ -45,6 +46,12 @@ app.get('/health', (req, res) => {
 app.get('/docs/openapi.json', (req, res) => {
   res.json(openapi);
 });
+
+app.use('/api/v1/auth', authRoutes); 
+app.use('/api/v1/kiosk', kioskRoutes); // [NEW] เปิดทางให้ตู้ Kiosk
+
+// --- 🔐 Private Routes (Auth Required) ---
+app.use(authMiddleware); 
 
 app.use(
   '/docs',
@@ -87,7 +94,6 @@ app.get('/health/db', async (req, res) => {
   });
 });
 
-app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/overview', overviewRoutes);
 app.use('/api/v1/transactions', transactionRoutes);
@@ -95,7 +101,6 @@ app.use('/api/v1/users', authorize(['super_admin']), usersRoutes);
 app.use('/api/v1/members', memberRoutes);
 app.use('/api/v1/service-pricing', authorize(['super_admin', 'staff']), servicePricingRoutes);
 app.use('/api/v1/payment-settings', paymentSettingsRouter);
-
 
 app.use('/api/v1/devices', devicesRoutes);
 app.use('/api/v1/theme', themeRoutes);

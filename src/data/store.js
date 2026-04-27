@@ -4,6 +4,7 @@ const nowIso = new Date().toISOString();
 
 const store = {
   "sessions": {},
+  "kiosks": [], // [NEW] สำหรับเก็บรายชื่อตู้ Kiosk ที่ลงทะเบียนแล้ว
   "users": [
     {
       "id": "u1",
