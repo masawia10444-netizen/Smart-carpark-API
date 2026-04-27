@@ -2,7 +2,7 @@ const express = require('express');
 const { store, createId } = require('../data/store');
 const { getConfig, setConfig } = require('../data/repositories/config.repo');
 const { authorize } = require('../middlewares/auth.middleware');
-const { listAllKiosks, generateActivationCode } = require('../data/repositories/kiosks.repo');
+const { listAllKiosks, generateActivationCode, editKiosk, deleteKiosk } = require('../data/repositories/kiosks.repo');
 
 const router = express.Router();
 const CONFIG_KEY = 'devices';
@@ -52,12 +52,43 @@ router.post('/kiosks/activation-code', async (req, res, next) => {
     const { name, location } = req.body;
     if (!name) return res.status(400).json({ message: 'Kiosk name is required' });
 
-    const code = await generateActivationCode({ name, location });
+    const result = await generateActivationCode({ name, location });
     res.json({ 
       message: 'Activation code generated', 
-      code,
+      code: result.code,
+      deviceId: result.deviceId,
       expiresIn: '1 hour'
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * ✏️ PUT /api/v1/devices/kiosks/:deviceId
+ * แอดมินแก้ไขข้อมูลตู้ (เช่น เปลี่ยนชื่อ, เปลี่ยนโซน)
+ */
+router.put('/kiosks/:deviceId', async (req, res, next) => {
+  try {
+    const { deviceId } = req.params;
+    const result = await editKiosk(deviceId, req.body);
+    if (!result.success) return res.status(404).json(result);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * 🗑️ DELETE /api/v1/devices/kiosks/:deviceId
+ * แอดมินลบตู้ที่ไม่ได้ใช้งานแล้วออกจากระบบ
+ */
+router.delete('/kiosks/:deviceId', async (req, res, next) => {
+  try {
+    const { deviceId } = req.params;
+    const result = await deleteKiosk(deviceId);
+    if (!result.success) return res.status(404).json(result);
+    res.json(result);
   } catch (err) {
     next(err);
   }

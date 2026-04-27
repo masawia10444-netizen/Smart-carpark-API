@@ -21,7 +21,11 @@ router.post('/check-in', async (req, res, next) => {
       ip: req.ip // เก็บ IP จริงของตู้ไว้ด้วย
     });
 
-    res.json({ message: 'Check-in successful', kiosk });
+    res.json({ 
+      message: 'Check-in successful', 
+      status: kiosk.status, // [NEW] บอกสถานะตู้กลับไป
+      kiosk 
+    });
   } catch (err) {
     next(err);
   }
@@ -33,10 +37,10 @@ router.post('/check-in', async (req, res, next) => {
  */
 router.post('/activate', async (req, res, next) => {
   try {
-    const { code, deviceId } = req.body;
-    if (!code || !deviceId) return res.status(400).json({ message: 'Code and deviceId are required' });
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ message: 'Activation code is required' });
 
-    const result = await activateKiosk(code, deviceId);
+    const result = await activateKiosk(code);
     if (!result.success) return res.status(400).json(result);
 
     res.json(result);
@@ -51,9 +55,19 @@ router.post('/activate', async (req, res, next) => {
  */
 router.get('/config', async (req, res, next) => {
   try {
+    const { deviceId } = req.query;
+    let currentStatus = 'online';
+    
+    if (deviceId) {
+      const { store } = require('../data/store');
+      const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
+      if (kiosk) currentStatus = kiosk.status;
+    }
+
     res.json({
       theme: theme || { primaryColor: '#1a73e8', logoUrl: null },
-      systemName: 'Smart Carpark Kiosk'
+      systemName: 'Smart Carpark Kiosk',
+      status: currentStatus // [NEW] บอกสถานะตู้กลับไป
     });
   } catch (err) {
     next(err);
@@ -122,8 +136,16 @@ router.post('/payment', async (req, res, next) => {
   try {
     const { transactionId, method, amount, deviceId } = req.body;
     
-    // อัปเดตสถานะตู้
+    // [NEW] ตรวจสอบสถานะตู้ก่อนรับเงิน
     if (deviceId) {
+      const { store } = require('../data/store');
+      const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
+      if (kiosk && kiosk.status === 'maintenance') {
+        return res.status(403).json({ 
+          message: 'This kiosk is currently under maintenance. Payment is disabled.',
+          status: 'maintenance'
+        });
+      }
       await updateKioskStatus(deviceId, { ip: req.ip });
     }
 

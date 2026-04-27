@@ -57,4 +57,16 @@ Authorization: Bearer <your_token>
 
 ---
 
+## 📟 6. การจัดการตู้ Kiosk (Kiosk Management)
+
+ใช้สำหรับหน้าจอแอดมินในการคุมตู้จ่ายเงินทั้งหมด:
+- **รายชื่อตู้**: `GET /api/v1/devices/kiosks`
+- **🎫 ออกรหัสลงทะเบียน**: `POST /api/v1/devices/kiosks/activation-code`
+    - Payload: `{ "name": "ตู้ชั้น 1", "location": "Lobby A" }`
+    - ระบบจะคืนค่า `code` (6 หลัก) และ `deviceId` (จองไว้ให้) กลับมาทันที
+- **✏️ แก้ไขตู้**: `PUT /api/v1/devices/kiosks/:deviceId`
+- **🗑️ ลบตู้**: `DELETE /api/v1/devices/kiosks/:deviceId`
+
+---
+
 *หมายเหตุ: ข้อมูลทั้งหมดเป็นแบบ Real-time และมีการตรวจสอบสิทธิ์ (RBAC) ทุกครั้งที่เรียกใช้งาน*
