@@ -83,7 +83,8 @@ function toTransactionApi(row) {
     totalPaid,
     remainingAmount,
     serviceDisplay: `${dateFormatted} | ${durationFormatted}`,
-    durationMinute: Math.floor(durationMs / 60000),
+    durationHour: hrs + (mins > 0 ? 1 : 0), // ปัดเศษนาทีขึ้นเป็น 1 ชม. ตามหลักจอดรถ
+    totalMinutes: Math.floor(durationMs / 60000),
     payments: (row.payments || []).map(p => ({
       ...p,
       paidAmount: toNumberOrNull(p.amount ?? p.paidAmount)
@@ -334,9 +335,9 @@ module.exports = {
   listTransactions,
   listAllTransactions,
   getTransactionById,
-  processPayment,
   saveTransaction,
   updateTransaction,
-  deleteTransaction
+  deleteTransaction,
+  processPayment,
+  toTransactionApi // Exported for route usage
 };
-

@@ -1,5 +1,5 @@
 const express = require('express');
-const { listTransactions, getTransactionById, processPayment, saveTransaction, updateTransaction, deleteTransaction } = require('../data/repositories/transactions.repo');
+const { listTransactions, getTransactionById, processPayment, saveTransaction, updateTransaction, deleteTransaction, toTransactionApi } = require('../data/repositories/transactions.repo');
 const { authorize } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
@@ -40,7 +40,7 @@ router.get('/:id', async (req, res, next) => {
   try {
     const transaction = await getTransactionById(req.params.id);
     if (!transaction) return res.status(404).json({ message: 'Not found' });
-    res.json(transaction);
+    res.json(toTransactionApi(transaction));
   } catch (err) {
     next(err);
   }
