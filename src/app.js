@@ -47,12 +47,14 @@ app.get('/docs/openapi.json', (req, res) => {
   res.json(openapi);
 });
 
-app.use('/api/v1/auth', authRoutes); 
 app.use('/api/v1/kiosk', kioskRoutes); // [NEW] เปิดทางให้ตู้ Kiosk
 
-// --- 🔐 Private Routes (Auth Required) ---
+// --- 🔐 Authentication Middleware ---
 app.use(authMiddleware); 
 
+app.use('/api/v1/auth', authRoutes); 
+
+// --- 🔐 Private Routes (Auth Required) ---
 app.use(
   '/docs',
   swaggerUi.serve,
