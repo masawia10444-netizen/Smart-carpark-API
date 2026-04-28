@@ -51,22 +51,25 @@ router.post('/activate', async (req, res, next) => {
 
 /**
  * 🎨 Kiosk Config
- * ดึงธีมสีและโลโก้ที่แอดมินตั้งค่าไว้ไปใช้ที่หน้าตู้
+ * ดึงธีมสีและโลโก้ที่แอดมินตั้งค่าไว้ไปใช้ที่หน้าตู้ (บังคับใช้ deviceId)
  */
 router.get('/config', async (req, res, next) => {
   try {
     const { deviceId } = req.query;
-    let currentStatus = 'online';
     
-    if (deviceId) {
-      const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
-      if (kiosk) currentStatus = kiosk.status;
+    if (!deviceId) {
+      return res.status(400).json({ message: 'deviceId is required' });
+    }
+
+    const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
+    if (!kiosk) {
+      return res.status(401).json({ message: 'Invalid or unregistered deviceId' });
     }
 
     res.json({
       theme: store.theme || { primaryColor: '#1a73e8', logoUrl: null },
       systemName: 'Smart Carpark Kiosk',
-      status: currentStatus // [NEW] บอกสถานะตู้กลับไป
+      status: kiosk.status // บอกสถานะตู้กลับไป
     });
   } catch (err) {
     next(err);
