@@ -1,7 +1,7 @@
 const express = require('express');
 const { listTransactions, getTransactionById, processPayment, toTransactionApi } = require('../data/repositories/transactions.repo');
 const { updateKioskStatus, activateKiosk } = require('../data/repositories/kiosks.repo');
-const { theme } = require('../data/store');
+const { store } = require('../data/store');
 
 const router = express.Router();
 
@@ -59,13 +59,12 @@ router.get('/config', async (req, res, next) => {
     let currentStatus = 'online';
     
     if (deviceId) {
-      const { store } = require('../data/store');
       const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
       if (kiosk) currentStatus = kiosk.status;
     }
 
     res.json({
-      theme: theme || { primaryColor: '#1a73e8', logoUrl: null },
+      theme: store.theme || { primaryColor: '#1a73e8', logoUrl: null },
       systemName: 'Smart Carpark Kiosk',
       status: currentStatus // [NEW] บอกสถานะตู้กลับไป
     });
@@ -138,7 +137,6 @@ router.post('/payment', async (req, res, next) => {
     
     // [NEW] ตรวจสอบสถานะตู้ก่อนรับเงิน
     if (deviceId) {
-      const { store } = require('../data/store');
       const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
       if (kiosk && kiosk.status === 'maintenance') {
         return res.status(403).json({ 
