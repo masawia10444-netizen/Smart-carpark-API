@@ -15,7 +15,6 @@ const memberRoutes = require('./routes/members.routes');
 const servicePricingRoutes = require('./routes/servicePricing.routes');
 const paymentSettingsRouter = require('./routes/paymentSettings.routes');
 const kioskRoutes = require('./routes/kiosk.routes'); // [NEW] Kiosk Routes
-const mobileRoutes = require('./routes/mobile.routes'); // [NEW] Mobile E-Payment Routes
 
 const devicesRoutes = require('./routes/devices.routes');
 const themeRoutes = require('./routes/theme.routes');
@@ -49,7 +48,6 @@ app.get('/docs/openapi.json', (req, res) => {
 });
 
 app.use('/api/v1/kiosk', kioskRoutes); // [NEW] เปิดทางให้ตู้ Kiosk
-app.use('/api/v1/mobile', mobileRoutes); // [NEW] เปิดทางให้เว็บมือถือลูกค้า
 
 // --- 🔐 Authentication Middleware ---
 app.use(authMiddleware); 
