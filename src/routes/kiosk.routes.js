@@ -52,7 +52,7 @@ router.get('/events', (req, res) => {
 router.post('/entry', async (req, res, next) => {
   try {
     const { deviceId, plateNo, vehicleType } = req.body;
-    
+
     if (!deviceId) {
       return res.status(400).json({ message: 'deviceId is required' });
     }
@@ -66,10 +66,10 @@ router.post('/entry', async (req, res, next) => {
     }
 
     // สร้าง Transaction ใหม่
-    const newTransaction = await createTransaction({ 
-      plateNo, 
-      vehicleType: vehicleType || 'car', 
-      serviceType: 'parking' 
+    const newTransaction = await createTransaction({
+      plateNo,
+      vehicleType: vehicleType || 'car',
+      serviceType: 'parking'
     });
 
     // อัปเดตสถานะการออนไลน์ของตู้
@@ -95,17 +95,17 @@ router.post('/check-in', async (req, res, next) => {
     const { deviceId, name, location, version } = req.body;
     if (!deviceId) return res.status(400).json({ message: 'deviceId is required' });
 
-    const kiosk = await updateKioskStatus(deviceId, { 
-      name, 
-      location, 
+    const kiosk = await updateKioskStatus(deviceId, {
+      name,
+      location,
       version,
       ip: req.ip // เก็บ IP จริงของตู้ไว้ด้วย
     });
 
-    res.json({ 
-      message: 'Check-in successful', 
+    res.json({
+      message: 'Check-in successful',
       status: kiosk.status, // [NEW] บอกสถานะตู้กลับไป
-      kiosk 
+      kiosk
     });
   } catch (err) {
     next(err);
@@ -138,7 +138,7 @@ router.get('/config', async (req, res, next) => {
   try {
     const { deviceId } = req.query;
     let status = 'unregistered';
-    
+
     // ถ้าส่ง deviceId มา ให้เช็คสถานะตู้
     if (deviceId) {
       const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
@@ -174,10 +174,10 @@ router.get('/search', async (req, res, next) => {
       await updateKioskStatus(deviceId, { ip: req.ip });
     }
 
-    const result = await listTransactions({ 
-      plateNo, 
+    const result = await listTransactions({
+      plateNo,
       status: 'pending',
-      perPage: 5 
+      perPage: 5
     });
 
     res.json({
@@ -206,10 +206,10 @@ router.put('/search', async (req, res, next) => {
     }
 
     // ค้นหาเฉพาะรถที่สถานะยังไม่เสร็จสิ้น (ยังอยู่ในอาคาร)
-    const result = await listTransactions({ 
-      plateNo, 
+    const result = await listTransactions({
+      plateNo,
       status: 'pending', // ค้นหารถที่ค้างจ่าย
-      perPage: 5 
+      perPage: 5
     });
 
     res.json({
@@ -250,12 +250,12 @@ router.get('/transaction/:id', async (req, res, next) => {
 router.post('/payment', async (req, res, next) => {
   try {
     const { transactionId, method, amount, deviceId } = req.body;
-    
+
     // [NEW] ตรวจสอบสถานะตู้ก่อนรับเงิน
     if (deviceId) {
       const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
       if (kiosk && kiosk.status === 'maintenance') {
-        return res.status(403).json({ 
+        return res.status(403).json({
           message: 'This kiosk is currently under maintenance. Payment is disabled.',
           status: 'maintenance'
         });
@@ -265,10 +265,10 @@ router.post('/payment', async (req, res, next) => {
 
     // บันทึกการจ่ายเงิน โดยระบุช่องทางเป็น 'kiosk'
     const result = await processPayment(transactionId, {
-      method: method || 'qr_code', 
+      method: method || 'qr_code',
       channel: 'kiosk',
       amount: amount,
-      processedBy: deviceId ? `kiosk_${deviceId}` : 'system_kiosk' 
+      processedBy: deviceId ? `kiosk_${deviceId}` : 'system_kiosk'
     });
 
     if (!result) {

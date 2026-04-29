@@ -103,9 +103,8 @@ Authorization: Bearer <your_token>
 ใช้คำสั่ง `EventSource` ที่มีมาให้ในเบราว์เซอร์ โดยเชื่อมต่อทันทีเมื่อแอปเริ่มทำงาน (Boot up)
 
 ```javascript
-// 1. เปิดการเชื่อมต่อ (จำเป็นต้องแนบ deviceId เพื่อความปลอดภัย)
-const deviceId = 'YOUR_DEVICE_ID';
-const evtSource = new EventSource(`http://localhost:8080/api/v1/kiosk/events?deviceId=${deviceId}`);
+// 1. เปิดการเชื่อมต่อ (ถ้ามี deviceId สามารถแนบไปที่ ?deviceId=... ได้ แต่ไม่บังคับ)
+const evtSource = new EventSource(`http://localhost:8080/api/v1/kiosk/events`);
 
 // 2. รับฟังเหตุการณ์
 evtSource.onmessage = (event) => {
