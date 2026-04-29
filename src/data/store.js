@@ -4,7 +4,12 @@ const nowIso = new Date().toISOString();
 
 const store = {
   "sessions": {},
-  "kiosks": [], // [NEW] สำหรับเก็บรายชื่อตู้ Kiosk ที่ลงทะเบียนแล้ว
+  "kiosks": [], // สำหรับเก็บรายชื่อตู้ Kiosk ที่ลงทะเบียนแล้ว
+  "themePresets": {
+    "preset1": { "name": "Ocean Blue", "color": "#1a73e8" },
+    "preset2": { "name": "Eco Green", "color": "#2e7d32" },
+    "preset3": { "name": "Midnight Dark", "color": "#212121" }
+  },
   "users": [
     {
       "id": "u1",

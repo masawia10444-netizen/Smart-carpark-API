@@ -35,15 +35,9 @@ const upload = multer({
   }
 });
 
-const THEME_PRESETS = {
-  preset1: { name: 'Ocean Blue', color: '#1a73e8' },
-  preset2: { name: 'Eco Green', color: '#2e7d32' },
-  preset3: { name: 'Midnight Dark', color: '#212121' }
-};
-
 const DEFAULT_THEME = {
   mode: 'preset1',
-  primaryColor: THEME_PRESETS.preset1.color,
+  primaryColor: '#1a73e8',
   customColor: '#ff00ff',
   logoUrl: null
 };
@@ -56,8 +50,8 @@ router.get('/', async (req, res, next) => {
     if (!theme || !theme.mode) {
       theme = { ...DEFAULT_THEME, ...theme };
     }
-    // ส่ง presets กลับไปให้ Frontend ทำ UI
-    res.json({ ...theme, presets: THEME_PRESETS });
+    // ส่ง presets กลับไปให้ Frontend ทำ UI โดยดึงจาก store
+    res.json({ ...theme, presets: store.themePresets });
   } catch (err) {
     next(err);
   }
@@ -78,8 +72,8 @@ router.put('/', async (req, res, next) => {
     // คำนวณ primaryColor ตามโหมดที่เลือก
     if (newMode === 'custom') {
       newPrimaryColor = newCustomColor;
-    } else if (THEME_PRESETS[newMode]) {
-      newPrimaryColor = THEME_PRESETS[newMode].color;
+    } else if (store.themePresets && store.themePresets[newMode]) {
+      newPrimaryColor = store.themePresets[newMode].color;
     }
 
     const nextTheme = {
@@ -93,7 +87,7 @@ router.put('/', async (req, res, next) => {
 
     const saved = await setConfig(CONFIG_KEY, nextTheme);
     appEvents.emit('theme_updated', saved); // แจ้งเตือน Kiosk
-    res.json({ message: 'Theme updated', theme: { ...saved, presets: THEME_PRESETS } });
+    res.json({ message: 'Theme updated', theme: { ...saved, presets: store.themePresets } });
   } catch (err) {
     next(err);
   }
