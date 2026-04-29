@@ -85,45 +85,46 @@ Authorization: Bearer <token>
 - `POST /refresh` - รีเฟรช Token
 - `GET /me` - ตรวจสอบข้อมูลผู้ใช้ปัจจุบัน
 
-### 🚗 Kiosk & Self-Service (ไม่ต้องใช้ Token) (`/api/v1/kiosk`)
-- `POST /activate` - ผูกตู้ Kiosk เข้ากับระบบ (นำ Code 6 หลักมาแลก Device ID)
-- `GET /config` - ดึงธีม โลโก้ และสถานะของตู้ไปแสดงที่หน้าจอ
-- `GET /events` - ท่อเชื่อมต่อ SSE แบบ Real-time เพื่อรอรับคำสั่งเปลี่ยนธีม
-- `POST /entry` - ตู้สั่งสร้างบิลตอนรถขับเข้า (Auto Generate Bill)
-- `GET /search` - ค้นหารถที่กำลังจอดอยู่ (ลูกค้าพิมพ์ทะเบียนค้นหา)
-- `GET /transaction/:id` - ดึงข้อมูลบิลและยอดเงิน (Public API สำหรับตู้หรือสแกน QR)
-- `POST /payment` - รับแจ้งผลการชำระเงินจากตู้ Kiosk เพื่อตัดยอด
-
 ### 📊 Dashboard & Overview
-- `GET /api/v1/dashboard` - สรุปยอดขาย Real-time วันนี้
+- `GET /api/v1/dashboard` - สรุปยอดขาย Real-time วันนี้ (การคำนวณรายวิทยุ)
 - `GET /api/v1/overview/summary` - รายงานสรุปเชิงวิเคราะห์ตามช่วงเวลา (Grand Totals)
 
-### 🚙 Transactions (Admin / Cashier) (`/api/v1/transactions`)
-- `GET /` - ค้นหาและดูรายการรถทั้งหมด
-- `POST /` - สร้างบิลขาเข้า (กรณีคีย์ทะเบียนรถเองด้วยมือ)
+### 🚗 Transactions (Parking Operations) (`/api/v1/transactions`)
+- `GET /` - ค้นหาและดูรายการรถทั้งหมด (Query: `keyword`, `plateNo`, `billNo`, `status`)
 - `GET /:id` - ดูรายละเอียดบิลและประวัติการจ่ายเงิน
-- `POST /:id/payment` - บันทึกการชำระเงินโดยพนักงาน (คำนวณ Overstay อัตโนมัติ)
-- `PATCH /:id/status` - เปลี่ยนสถานะบิล (เช่น ยกเลิก)
-- `PATCH /:id` - แก้ไขทะเบียนรถ
+- `POST /:id/payment` - บันทึกการชำระเงิน (คำนวณ Overstay และ Grace Period อัตโนมัติ)
+- `PATCH /:id` - แก้ไขทะเบียนรถ/สถานะ (กรณี LPR อ่านผิด)
 - `DELETE /:id` - ลบบิลรายการจอด
 
-### 👥 Users & Member Management (`/api/v1/users` & `/api/v1/members`)
-- `GET, POST, PUT, DELETE /api/v1/users` - จัดการบัญชีพนักงานและสิทธิ์การเข้าถึงเมนูต่างๆ
-- `GET, POST, PATCH, DELETE /api/v1/members` - จัดการข้อมูลสมาชิกลานจอดรถรายเดือน
+### 👥 Member Management (`/api/v1/members`)
+- `GET /stats` - ดูสถิติจำนวนพนักงาน
+- `GET /` - รายชื่อพนักงานทั้งหมด
+- `POST /` - เพิ่มพนักงานใหม่ (+ กำหนดรหัสผ่านครั้งแรก)
+- `PATCH /:id` - แก้ไขโปรไฟล์พนักงาน
+- `PATCH /:id/permissions` - กำหนดสิธิ์ (Permission Keys) รายบุคคล
+- `DELETE /:id` - ลบพนักงาน
 
 ### 💰 Service Pricing (`/api/v1/service-pricing`)
-- `GET, PUT /config` - ดู/แก้ไข การตั้งค่ากฎราคาและเวลาผ่อนปรน (Grace Period)
-- `POST, DELETE /rules` - เพิ่ม/ลบ กฎค่าบริการพิเศษ
+- `GET /config` - ดูการตั้งค่ากฎราคาและประเภทรถทั้งหมด
+- `PUT /config` - แก้ไขกฎราคา/ประเภทรถ/เวลาผ่อนปรน (Grace Period)
 
-### ⚙️ System & Device Settings (`/api/v1/system-settings`, `/api/v1/theme`, `/api/v1/devices`)
-- `POST /api/v1/devices/kiosks/activation-code` - ออกรหัส PIN 6 หลักสำหรับนำไปให้ช่างตั้งค่าตู้ Kiosk
-- `GET, POST, PUT, DELETE /api/v1/devices` - ดูสถานะและจัดการอุปกรณ์ในระบบ
-- `GET, PUT /api/v1/theme` - ดึงและอัปเดตสีธีมระบบ
-- `POST /api/v1/theme/upload-logo` - อัปโหลดภาพโลโก้ระบบ (รองรับ jpg, png, svg)
-- `DELETE /api/v1/theme/logo` - ลบภาพโลโก้ปัจจุบัน
-- `GET, PUT /api/v1/system-settings` - ดึงและอัปเดตการตั้งค่าระบบทั่วไป
-- `GET, PUT /api/v1/system-settings/receipt` - ตั้งค่าข้อมูลการแสดงผลใบแจ้งหนี้
-- `PUT /api/v1/system-settings/receipt/printer` - ตั้งค่าขนาดกระดาษและฟอนต์สำหรับเครื่องปรินต์ Kiosk
+### 💳 Payment Settings (`/api/v1/payment-settings`)
+- `GET /methods` - ดูรายการช่องทางชำระเงิน (Cash, QR, Bank)
+- `PATCH /methods/:id` - เปิด/ปิด ช่องทางการจ่ายเงิน
+- `GET /channels` - ดูข้อมูลจุดบริการ (Kiosk, Cashier, Gate)
+- `PATCH /channels/:id` - จับคู่ (Mapping) ช่องทางจ่ายเงินกับจุดบริการ
+
+### ⚙️ System & Device Settings
+- `GET /api/v1/devices/config` - ดูสถานะและรายชื่ออุปกรณ์ (LPR, Printer, Gate)
+- `PUT /api/v1/devices/:id` - แก้ไขข้อมูลอุปกรณ์
+- `GET /api/v1/theme` - ดึงข้อมูลสี โลโก้ และธีมระบบ
+- `PUT /api/v1/theme` - อัปเดตธีม (สีหลัก)
+- `POST /api/v1/theme/upload-logo` - **[NEW]** อัปโหลดภาพโลโก้ระบบ (รองรับ jpg, png, svg)
+- `DELETE /api/v1/theme/logo` - **[NEW]** ลบภาพโลโก้ปัจจุบันและรีเซ็ตค่า
+- `GET /api/v1/system-settings` - ดึงการตั้งค่าระบบทั่วไป
+- `PUT /api/v1/system-settings` - อัปเดตการตั้งค่าระบบทั่วไป
+- `GET /api/v1/system-settings/receipt` - **[NEW]** ดึงการตั้งค่าการแสดงผลใบแจ้งหนี้ (บิลเข้า/บิลหลังชำระ)
+- `PUT /api/v1/system-settings/receipt` - **[NEW]** อัปเดตสิทธิ์การแสดงผลฟิลด์และเวลาหมดอายุในบิล
 
 ---
 

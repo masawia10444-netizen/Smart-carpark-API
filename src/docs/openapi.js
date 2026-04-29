@@ -606,16 +606,46 @@ const openapi = {
     '/api/v1/theme': {
       get: {
         tags: ['Theme'],
-        summary: 'Get theme',
+        summary: 'Get theme settings and presets',
         responses: {
-          200: { description: 'Theme', content: { 'application/json': { schema: { type: 'object' } } } },
+          200: { 
+            description: 'Theme settings', 
+            content: { 
+              'application/json': { 
+                schema: { 
+                  type: 'object',
+                  properties: {
+                    mode: { type: 'string', description: 'preset1, preset2, preset3, custom' },
+                    primaryColor: { type: 'string', description: 'Calculated color to use in UI' },
+                    customColor: { type: 'string', description: 'Color used when mode is custom' },
+                    logoUrl: { type: 'string', nullable: true },
+                    presets: { type: 'object' }
+                  }
+                } 
+              } 
+            } 
+          },
           401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
         }
       },
       put: {
         tags: ['Theme'],
-        summary: 'Update theme',
-        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+        summary: 'Update theme settings',
+        requestBody: { 
+          required: true, 
+          content: { 
+            'application/json': { 
+              schema: { 
+                type: 'object',
+                properties: {
+                  mode: { type: 'string', description: 'preset1, preset2, preset3, custom' },
+                  customColor: { type: 'string' },
+                  logoUrl: { type: 'string' }
+                }
+              } 
+            } 
+          } 
+        },
         responses: {
           200: { description: 'Updated', content: { 'application/json': { schema: { type: 'object' } } } },
           401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }

@@ -35,12 +35,29 @@ const upload = multer({
   }
 });
 
+const THEME_PRESETS = {
+  preset1: { name: 'Ocean Blue', color: '#1a73e8' },
+  preset2: { name: 'Eco Green', color: '#2e7d32' },
+  preset3: { name: 'Midnight Dark', color: '#212121' }
+};
+
+const DEFAULT_THEME = {
+  mode: 'preset1',
+  primaryColor: THEME_PRESETS.preset1.color,
+  customColor: '#ff00ff',
+  logoUrl: null
+};
+
 router.use(authorize(['super_admin', 'staff'], 'theme'));
 
 router.get('/', async (req, res, next) => {
   try {
-    const theme = await getConfig(CONFIG_KEY, store.theme);
-    res.json(theme);
+    let theme = await getConfig(CONFIG_KEY, store.theme);
+    if (!theme || !theme.mode) {
+      theme = { ...DEFAULT_THEME, ...theme };
+    }
+    // ส่ง presets กลับไปให้ Frontend ทำ UI
+    res.json({ ...theme, presets: THEME_PRESETS });
   } catch (err) {
     next(err);
   }
@@ -48,15 +65,35 @@ router.get('/', async (req, res, next) => {
 
 router.put('/', async (req, res, next) => {
   try {
-    const current = await getConfig(CONFIG_KEY, store.theme);
+    let current = await getConfig(CONFIG_KEY, store.theme);
+    if (!current || !current.mode) {
+      current = { ...DEFAULT_THEME, ...current };
+    }
+
+    const body = req.body;
+    let newMode = body.mode || current.mode;
+    let newCustomColor = body.customColor || current.customColor;
+    let newPrimaryColor = current.primaryColor;
+
+    // คำนวณ primaryColor ตามโหมดที่เลือก
+    if (newMode === 'custom') {
+      newPrimaryColor = newCustomColor;
+    } else if (THEME_PRESETS[newMode]) {
+      newPrimaryColor = THEME_PRESETS[newMode].color;
+    }
+
     const nextTheme = {
       ...current,
-      ...req.body,
+      ...body,
+      mode: newMode,
+      customColor: newCustomColor,
+      primaryColor: newPrimaryColor,
       updatedAt: new Date().toISOString()
     };
+
     const saved = await setConfig(CONFIG_KEY, nextTheme);
     appEvents.emit('theme_updated', saved); // แจ้งเตือน Kiosk
-    res.json({ message: 'Theme updated', theme: saved });
+    res.json({ message: 'Theme updated', theme: { ...saved, presets: THEME_PRESETS } });
   } catch (err) {
     next(err);
   }
