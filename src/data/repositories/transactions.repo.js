@@ -105,7 +105,13 @@ async function listTransactions({ keyword, plateNo, billNo, status, paymentStatu
       rows = rows.filter((item) => [item.billNo, item.plateNo, item.serviceType].some((field) => String(field).toLowerCase().includes(kw)));
     }
 
-    if (plateNo) rows = rows.filter((item) => item.plateNo.includes(plateNo));
+    if (plateNo) {
+      const normalizedQuery = plateNo.replace(/[\s-]/g, '').toLowerCase();
+      rows = rows.filter((item) => {
+        const normalizedItem = String(item.plateNo || '').replace(/[\s-]/g, '').toLowerCase();
+        return normalizedItem.includes(normalizedQuery);
+      });
+    }
     if (billNo) rows = rows.filter((item) => item.billNo.includes(billNo));
     if (status) rows = rows.filter((item) => item.status === status);
     if (paymentStatus) rows = rows.filter((item) => item.payments.some(p => p.status === paymentStatus));
@@ -130,7 +136,11 @@ async function listTransactions({ keyword, plateNo, billNo, status, paymentStatu
     query = query.or(`bill_no.ilike.%${kw}%,plate_no.ilike.%${kw}%,service_type.ilike.%${kw}%`);
   }
 
-  if (plateNo) query = query.ilike('plate_no', `%${plateNo}%`);
+  if (plateNo) {
+    // ลบขีดและช่องว่างออก แล้วเอาตัวอักษรมาคั่นด้วย % (Fuzzy Match) เพื่อให้ค้นหา "กข12" แล้วเจอ "กข-12"
+    const fuzzyPlate = plateNo.replace(/[\s-]/g, '').split('').join('%');
+    query = query.ilike('plate_no', `%${fuzzyPlate}%`);
+  }
   if (billNo) query = query.ilike('bill_no', `%${billNo}%`);
   if (status) query = query.eq('status', status);
 

@@ -181,7 +181,7 @@ router.get('/search', async (req, res, next) => {
     });
 
     res.json({
-      count: result.total,
+      count: result.meta ? result.meta.total : 0,
       items: result.data.map(toTransactionApi)
     });
   } catch (err) {
@@ -213,7 +213,7 @@ router.put('/search', async (req, res, next) => {
     });
 
     res.json({
-      count: result.total,
+      count: result.meta ? result.meta.total : 0,
       items: result.data.map(toTransactionApi)
     });
   } catch (err) {
