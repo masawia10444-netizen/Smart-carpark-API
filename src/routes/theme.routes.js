@@ -37,7 +37,7 @@ const upload = multer({
 
 const DEFAULT_THEME = {
   mode: 'preset1',
-  themeColor: '#FFD54F',
+  themeColor: '#1a73e8',
   logoUrl: null
 };
 
@@ -68,8 +68,12 @@ router.put('/', async (req, res, next) => {
     let newThemeColor = current.themeColor;
 
     // คำนวณ themeColor ตามโหมดที่เลือก
-    if (newMode === 'custom') {
+    if (newMode === 'preset4') {
       newThemeColor = body.themeColor || current.themeColor;
+      // บันทึกสี custom ลงใน preset4 ของระบบ เพื่อให้เรียกดูครั้งหน้าได้สีที่เคยบันทึก
+      if (store.themePresets && store.themePresets.preset4) {
+        store.themePresets.preset4.themeColor = newThemeColor;
+      }
     } else if (store.themePresets && store.themePresets[newMode]) {
       const preset = store.themePresets[newMode];
       newThemeColor = preset.themeColor;

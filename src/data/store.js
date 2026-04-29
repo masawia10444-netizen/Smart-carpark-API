@@ -6,9 +6,10 @@ const store = {
   "sessions": {},
   "kiosks": [], // สำหรับเก็บรายชื่อตู้ Kiosk ที่ลงทะเบียนแล้ว
   "themePresets": {
-    "preset1": { "themeColor": "#FFD54F" },
+    "preset1": { "themeColor": "#1a73e8" },
     "preset2": { "themeColor": "#2e7d32" },
-    "preset3": { "themeColor": "#d32f2f" }
+    "preset3": { "themeColor": "#d32f2f" },
+    "preset4": { "themeColor": "#000000" }
   },
   "users": [
     {

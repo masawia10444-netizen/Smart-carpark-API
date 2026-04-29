@@ -615,7 +615,7 @@ const openapi = {
                 schema: { 
                   type: 'object',
                   properties: {
-                    mode: { type: 'string', description: 'preset1, preset2, preset3, custom' },
+                    mode: { type: 'string', description: 'preset1, preset2, preset3, preset4' },
                     themeColor: { type: 'string', description: 'The main color for the UI' },
                     logoUrl: { type: 'string', nullable: true },
                     presets: { type: 'object' }
@@ -637,8 +637,8 @@ const openapi = {
               schema: { 
                 type: 'object',
                 properties: {
-                  mode: { type: 'string', description: 'preset1, preset2, preset3, custom' },
-                  themeColor: { type: 'string', description: 'Required only if mode is custom' },
+                  mode: { type: 'string', description: 'preset1, preset2, preset3, preset4' },
+                  themeColor: { type: 'string', description: 'Required only if mode is preset4' },
                   logoUrl: { type: 'string' }
                 }
               } 
