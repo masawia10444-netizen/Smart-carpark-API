@@ -94,7 +94,7 @@ evtSource.onmessage = (event) => {
         const newTheme = data.theme;
         // นำ newTheme ไปปรับแต่ง CSS Variables ได้ทันที
         console.log('อัปเดตธีมแล้ว:', newTheme);
-        // ตัวอย่าง: document.documentElement.style.setProperty('--primary', newTheme.primaryColor);
+        // ตัวอย่าง: document.documentElement.style.setProperty('--primary', newTheme.themeColor);
     }
 };
 

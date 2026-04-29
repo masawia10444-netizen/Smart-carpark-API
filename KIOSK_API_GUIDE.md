@@ -41,7 +41,7 @@
 ```json
 {
   "theme": {
-    "primaryColor": "#1a73e8",
+    "themeColor": "#1a73e8",
     "logoUrl": "http://localhost:8080/uploads/logo.png"
   },
   "systemName": "Smart Carpark Kiosk"
