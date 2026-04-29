@@ -14,14 +14,12 @@ const router = express.Router();
 router.get('/events', (req, res) => {
   const { deviceId } = req.query;
 
-  // ตรวจสอบความปลอดภัย: ต้องแนบ deviceId มาเพื่อเปิดท่อ
-  if (!deviceId) {
-    return res.status(400).json({ message: 'deviceId is required to connect to event stream' });
-  }
-
-  const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
-  if (!kiosk) {
-    return res.status(401).json({ message: 'Unauthorized device' });
+  // ถ้าส่ง deviceId มา ให้ตรวจสอบว่าตู้นี้มีจริงไหม
+  if (deviceId) {
+    const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
+    if (!kiosk) {
+      return res.status(401).json({ message: 'Unauthorized device' });
+    }
   }
 
   // ตั้งค่า Header ให้เป็น Event Stream
@@ -139,20 +137,21 @@ router.post('/activate', async (req, res, next) => {
 router.get('/config', async (req, res, next) => {
   try {
     const { deviceId } = req.query;
+    let status = 'unregistered';
     
-    if (!deviceId) {
-      return res.status(400).json({ message: 'deviceId is required' });
-    }
-
-    const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
-    if (!kiosk) {
-      return res.status(401).json({ message: 'Invalid or unregistered deviceId' });
+    // ถ้าส่ง deviceId มา ให้เช็คสถานะตู้
+    if (deviceId) {
+      const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
+      if (!kiosk) {
+        return res.status(401).json({ message: 'Invalid or unregistered deviceId' });
+      }
+      status = kiosk.status;
     }
 
     res.json({
       theme: store.theme || { primaryColor: '#1a73e8', logoUrl: null },
       systemName: 'Smart Carpark Kiosk',
-      status: kiosk.status // บอกสถานะตู้กลับไป
+      status: status // บอกสถานะตู้กลับไป (ถ้าไม่มี deviceId จะเป็น 'unregistered')
     });
   } catch (err) {
     next(err);
