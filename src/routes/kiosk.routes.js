@@ -1,9 +1,92 @@
 const express = require('express');
-const { listTransactions, getTransactionById, processPayment, toTransactionApi } = require('../data/repositories/transactions.repo');
+const { listTransactions, getTransactionById, processPayment, toTransactionApi, createTransaction } = require('../data/repositories/transactions.repo');
 const { updateKioskStatus, activateKiosk } = require('../data/repositories/kiosks.repo');
 const { store } = require('../data/store');
+const appEvents = require('../utils/events'); // [NEW] นำเข้า Event Emitter สำหรับ Realtime
 
 const router = express.Router();
+
+/**
+ * 📡 Kiosk SSE (Server-Sent Events)
+ * ท่อรับส่งข้อมูลแบบ Realtime ทางเดียว (Server -> Kiosk) 
+ * เพื่อใช้สั่งเปลี่ยนธีมแบบไม่ต้องรีเฟรช
+ */
+router.get('/events', (req, res) => {
+  const { deviceId } = req.query;
+
+  // ตรวจสอบความปลอดภัย: ต้องแนบ deviceId มาเพื่อเปิดท่อ
+  if (!deviceId) {
+    return res.status(400).json({ message: 'deviceId is required to connect to event stream' });
+  }
+
+  const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
+  if (!kiosk) {
+    return res.status(401).json({ message: 'Unauthorized device' });
+  }
+
+  // ตั้งค่า Header ให้เป็น Event Stream
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders(); // ส่ง Header ไปให้ Client ทันที
+
+  // ส่งข้อความแรกบอกว่าต่อติดแล้ว
+  res.write(`data: ${JSON.stringify({ type: 'connected', message: 'SSE Connection Established' })}\n\n`);
+
+  // ฟังก์ชันสำหรับส่งข้อมูลให้ Client เมื่อมีการ Trigger event จากส่วนอื่น
+  const onThemeUpdated = (newTheme) => {
+    res.write(`data: ${JSON.stringify({ type: 'theme_updated', theme: newTheme })}\n\n`);
+  };
+
+  // รับฟังสัญญาณ (Listen) จากเหตุการณ์ theme_updated
+  appEvents.on('theme_updated', onThemeUpdated);
+
+  // ทำความสะอาดเมื่อ Client ปิดเว็บ หรือเน็ตหลุด
+  req.on('close', () => {
+    appEvents.off('theme_updated', onThemeUpdated);
+  });
+});
+
+/**
+ * 🚗 Kiosk Entry (ออกบิลเข้าลานจอด)
+ * ตู้ขาเข้าเรียกเส้นนี้เพื่อสร้างรายการจอดรถใหม่
+ */
+router.post('/entry', async (req, res, next) => {
+  try {
+    const { deviceId, plateNo, vehicleType } = req.body;
+    
+    if (!deviceId) {
+      return res.status(400).json({ message: 'deviceId is required' });
+    }
+    if (!plateNo) {
+      return res.status(400).json({ message: 'plateNo is required' });
+    }
+
+    const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
+    if (!kiosk || kiosk.status === 'maintenance') {
+      return res.status(403).json({ message: 'Invalid kiosk or currently under maintenance' });
+    }
+
+    // สร้าง Transaction ใหม่
+    const newTransaction = await createTransaction({ 
+      plateNo, 
+      vehicleType: vehicleType || 'car', 
+      serviceType: 'parking' 
+    });
+
+    // อัปเดตสถานะการออนไลน์ของตู้
+    await updateKioskStatus(deviceId, { ip: req.ip });
+
+    // ส่งคืนข้อมูลบิล พร้อมกับตั้งค่ากระดาษใบเสร็จเพื่อให้ตู้นำไปพิมพ์
+    res.status(201).json({
+      message: 'Entry bill created successfully',
+      transaction: newTransaction,
+      receiptConfig: store.systemSettings?.receipt?.entryBill || {}
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 /**
  * 🛰️ Kiosk Check-in (Heartbeat)

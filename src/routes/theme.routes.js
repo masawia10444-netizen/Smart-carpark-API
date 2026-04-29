@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { store } = require('../data/store');
 const { getConfig, setConfig } = require('../data/repositories/config.repo');
+const appEvents = require('../utils/events'); // [NEW] นำเข้า Event Emitter
 const { authorize } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
@@ -54,6 +55,7 @@ router.put('/', async (req, res, next) => {
       updatedAt: new Date().toISOString()
     };
     const saved = await setConfig(CONFIG_KEY, nextTheme);
+    appEvents.emit('theme_updated', saved); // แจ้งเตือน Kiosk
     res.json({ message: 'Theme updated', theme: saved });
   } catch (err) {
     next(err);
@@ -85,6 +87,7 @@ router.post('/upload-logo', upload.single('logo'), async (req, res, next) => {
     };
     
     const saved = await setConfig(CONFIG_KEY, nextTheme);
+    appEvents.emit('theme_updated', saved); // แจ้งเตือน Kiosk
     
     res.json({ 
       message: 'Logo uploaded successfully', 
@@ -117,6 +120,7 @@ router.delete('/logo', async (req, res, next) => {
     };
 
     const saved = await setConfig(CONFIG_KEY, nextTheme);
+    appEvents.emit('theme_updated', saved); // แจ้งเตือน Kiosk
     res.json({ message: 'Logo deleted and reset successfully', theme: saved });
   } catch (err) {
     next(err);

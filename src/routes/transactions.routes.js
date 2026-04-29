@@ -1,5 +1,5 @@
 const express = require('express');
-const { listTransactions, getTransactionById, processPayment, saveTransaction, updateTransaction, deleteTransaction, toTransactionApi } = require('../data/repositories/transactions.repo');
+const { listTransactions, getTransactionById, processPayment, saveTransaction, updateTransaction, deleteTransaction, toTransactionApi, createTransaction } = require('../data/repositories/transactions.repo');
 const { authorize } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
@@ -30,6 +30,30 @@ router.get('/', async (req, res, next) => {
       },
 
       ...result
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/', async (req, res, next) => {
+  try {
+    const { plateNo, vehicleType, serviceType, entryAt } = req.body;
+    
+    if (!plateNo) {
+      return res.status(400).json({ message: 'plateNo is required' });
+    }
+
+    const newTransaction = await createTransaction({ 
+      plateNo, 
+      vehicleType, 
+      serviceType, 
+      entryAt 
+    });
+
+    res.status(201).json({ 
+      message: 'Entry bill created successfully', 
+      transaction: newTransaction 
     });
   } catch (err) {
     next(err);

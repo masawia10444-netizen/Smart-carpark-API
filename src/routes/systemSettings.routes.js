@@ -26,6 +26,36 @@ router.get('/receipt', async (req, res, next) => {
   }
 });
 
+// [NEW] API สำหรับแท็บ "ตั้งค่าอุปกรณ์" (Printer Settings)
+router.put('/receipt/printer', async (req, res, next) => {
+  try {
+    const { fontSize, billNumberFontSize, paperWidth } = req.body;
+    const current = await getConfig(CONFIG_KEY, store.systemSettings);
+    
+    // อัปเดตเฉพาะค่าของปริ้นเตอร์
+    const newReceipt = {
+      ...current.receipt,
+      printer: {
+        ...(current.receipt?.printer || {}),
+        fontSize: fontSize || 12,
+        billNumberFontSize: billNumberFontSize || 16,
+        paperWidth: paperWidth || 80
+      }
+    };
+
+    const nextSettings = {
+      ...current,
+      receipt: newReceipt,
+      updatedAt: new Date().toISOString()
+    };
+
+    const saved = await setConfig(CONFIG_KEY, nextSettings);
+    res.json({ message: 'Printer settings updated', printer: saved.receipt.printer });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.put('/receipt', async (req, res, next) => {
   try {
     const body = req.body || {};

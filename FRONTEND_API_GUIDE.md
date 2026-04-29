@@ -70,3 +70,37 @@ Authorization: Bearer <your_token>
 ---
 
 *หมายเหตุ: ข้อมูลทั้งหมดเป็นแบบ Real-time และมีการตรวจสอบสิทธิ์ (RBAC) ทุกครั้งที่เรียกใช้งาน*
+
+---
+
+## ⚡ 7. การทำงานแบบ Real-time (Server-Sent Events)
+
+สำหรับหน้าจอ **ตู้ Kiosk** ที่ต้องการเปลี่ยนธีม/สี/โลโก้ ทันทีที่แอดมินกด Save โดยไม่ต้องรีเฟรชหน้าจอ ให้ใช้การเชื่อมต่อแบบ SSE
+
+**การเรียกใช้งาน (ฝั่ง Frontend):**
+ใช้คำสั่ง `EventSource` ที่มีมาให้ในเบราว์เซอร์ โดยเชื่อมต่อทันทีเมื่อแอปเริ่มทำงาน (Boot up)
+
+```javascript
+// 1. เปิดการเชื่อมต่อ (จำเป็นต้องแนบ deviceId เพื่อความปลอดภัย)
+const deviceId = 'YOUR_DEVICE_ID';
+const evtSource = new EventSource(`http://localhost:8080/api/v1/kiosk/events?deviceId=${deviceId}`);
+
+// 2. รับฟังเหตุการณ์
+evtSource.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    
+    // หากเป็นการอัปเดตธีม
+    if (data.type === 'theme_updated') {
+        const newTheme = data.theme;
+        // นำ newTheme ไปปรับแต่ง CSS Variables ได้ทันที
+        console.log('อัปเดตธีมแล้ว:', newTheme);
+        // ตัวอย่าง: document.documentElement.style.setProperty('--primary', newTheme.primaryColor);
+    }
+};
+
+// 3. การจัดการ Error (เน็ตหลุด)
+evtSource.onerror = (err) => {
+    console.error("หลุดการเชื่อมต่อจากเซิร์ฟเวอร์", err);
+    // เบราว์เซอร์จะพยายามเชื่อมต่อใหม่ให้อัตโนมัติ (Auto-reconnect)
+};
+```

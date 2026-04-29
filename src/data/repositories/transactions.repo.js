@@ -89,6 +89,7 @@ function toTransactionApi(row) {
       ...p,
       paidAmount: toNumberOrNull(p.amount ?? p.paidAmount)
     })),
+    qrData: `${store.systemSettings?.general?.frontendUrl || 'http://localhost:3000'}/payment?tx=${row.id}`,
     createdAt: row.createdAt || row.entry_at || entryAt,
     updatedAt: row.updatedAt || row.exit_at || entryAt
   };
@@ -331,6 +332,60 @@ async function deleteTransaction(id) {
   return true;
 }
 
+async function createTransaction({ plateNo, vehicleType = 'car', serviceType = 'parking', entryAt }) {
+  if (!plateNo) throw new Error('plateNo is required');
+
+  const now = new Date();
+  const entryTime = entryAt || now.toISOString();
+  
+  // Format billNo as PKYYYYMMDD-HHMMSS
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const mins = String(now.getMinutes()).padStart(2, '0');
+  const secs = String(now.getSeconds()).padStart(2, '0');
+  const billNo = `PK${year}${month}${day}-${hours}${mins}${secs}`;
+
+  const newTransaction = {
+    id: `t_${Date.now()}_${Math.floor(Math.random()*1000)}`, // Simple unique ID since createId is not available
+    billNo: billNo,
+    plateNo: plateNo,
+    vehicleType: vehicleType,
+    serviceType: serviceType,
+    entryAt: entryTime,
+    status: 'pending',
+    totalPaid: 0,
+    payments: [],
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString()
+  };
+
+  if (!isSupabaseEnabled) {
+    store.transactions.push(newTransaction);
+    return toTransactionApi(newTransaction);
+  }
+
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert([{
+      id: newTransaction.id,
+      bill_no: newTransaction.billNo,
+      plate_no: newTransaction.plateNo,
+      vehicle_type: newTransaction.vehicleType,
+      service_type: newTransaction.serviceType,
+      entry_at: newTransaction.entryAt,
+      status: newTransaction.status,
+      total_paid: newTransaction.totalPaid,
+      payments: newTransaction.payments
+    }])
+    .select('*')
+    .single();
+
+  if (error) throw error;
+  return toTransactionApi(data);
+}
+
 module.exports = {
   listTransactions,
   listAllTransactions,
@@ -339,5 +394,6 @@ module.exports = {
   updateTransaction,
   deleteTransaction,
   processPayment,
+  createTransaction,
   toTransactionApi // Exported for route usage
 };

@@ -640,6 +640,33 @@ const openapi = {
           401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
         }
       }
+    },
+    '/api/v1/kiosk/entry': {
+      post: {
+        tags: ['Devices'],
+        summary: 'Create entry bill from Kiosk',
+        security: [],
+        requestBody: { 
+          required: true, 
+          content: { 
+            'application/json': { 
+              schema: { 
+                type: 'object',
+                properties: {
+                  deviceId: { type: 'string' },
+                  plateNo: { type: 'string' },
+                  vehicleType: { type: 'string', default: 'car' }
+                }
+              } 
+            } 
+          } 
+        },
+        responses: {
+          201: { description: 'Created', content: { 'application/json': { schema: { type: 'object' } } } },
+          400: { description: 'Bad request', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          403: { description: 'Invalid Kiosk', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
+        }
+      }
     }
   }
 };
