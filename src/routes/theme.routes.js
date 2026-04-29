@@ -37,10 +37,7 @@ const upload = multer({
 
 const DEFAULT_THEME = {
   mode: 'preset1',
-  themeName: 'Ocean Blue',
-  primaryColor: '#1a73e8',
-  secondaryColor: '#0F172A',
-  customColor: '#ff00ff',
+  themeColor: '#1a73e8',
   logoUrl: null
 };
 
@@ -68,33 +65,26 @@ router.put('/', async (req, res, next) => {
 
     const body = req.body;
     let newMode = body.mode || current.mode;
-    let newCustomColor = body.customColor || current.customColor;
-    
-    let newPrimaryColor = current.primaryColor;
-    let newSecondaryColor = current.secondaryColor;
-    let newThemeName = current.themeName;
+    let newThemeColor = current.themeColor;
 
-    // คำนวณสีตามโหมดที่เลือก
+    // คำนวณ themeColor ตามโหมดที่เลือก
     if (newMode === 'custom') {
-      newPrimaryColor = newCustomColor;
-      // ในโหมด custom อาจจะยอมให้หน้าบ้านส่ง secondaryColor มาตรงๆ ผ่าน body ก็ได้
-      if (body.secondaryColor) newSecondaryColor = body.secondaryColor;
-      if (body.themeName) newThemeName = body.themeName;
+      newThemeColor = body.themeColor || current.themeColor;
     } else if (store.themePresets && store.themePresets[newMode]) {
       const preset = store.themePresets[newMode];
-      newPrimaryColor = preset.primaryColor;
-      newSecondaryColor = preset.secondaryColor;
-      newThemeName = preset.themeName;
+      newThemeColor = preset.themeColor;
     }
 
     const nextTheme = {
       ...current,
       ...body,
       mode: newMode,
-      customColor: newCustomColor,
-      primaryColor: newPrimaryColor,
-      secondaryColor: newSecondaryColor,
-      themeName: newThemeName,
+      themeColor: newThemeColor,
+      // ลบตัวแปรเก่าๆ ออกเพื่อไม่ให้รก
+      primaryColor: undefined,
+      secondaryColor: undefined,
+      customColor: undefined,
+      themeName: undefined,
       updatedAt: new Date().toISOString()
     };
 

@@ -6,9 +6,9 @@ const store = {
   "sessions": {},
   "kiosks": [], // สำหรับเก็บรายชื่อตู้ Kiosk ที่ลงทะเบียนแล้ว
   "themePresets": {
-    "preset1": { "themeName": "Ocean Blue", "primaryColor": "#1a73e8", "secondaryColor": "#0F172A" },
-    "preset2": { "themeName": "Eco Green", "primaryColor": "#2e7d32", "secondaryColor": "#1b5e20" },
-    "preset3": { "name": "Ruby Red", "themeName": "Ruby Red", "primaryColor": "#d32f2f", "secondaryColor": "#b71c1c" }
+    "preset1": { "themeColor": "#1a73e8" },
+    "preset2": { "themeColor": "#2e7d32" },
+    "preset3": { "themeColor": "#d32f2f" }
   },
   "users": [
     {
