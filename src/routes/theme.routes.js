@@ -36,7 +36,6 @@ const upload = multer({
 });
 
 const DEFAULT_THEME = {
-  mode: 'preset1',
   themeColor: '#1a73e8',
   logoUrl: null
 };
@@ -46,7 +45,7 @@ router.use(authorize(['super_admin', 'staff'], 'theme'));
 router.get('/', async (req, res, next) => {
   try {
     let theme = await getConfig(CONFIG_KEY, store.theme);
-    if (!theme || !theme.mode) {
+    if (!theme || !theme.themeColor) {
       theme = { ...DEFAULT_THEME, ...theme };
     }
     // ส่ง presets กลับไปให้ Frontend ทำ UI โดยดึงจาก store
@@ -59,32 +58,30 @@ router.get('/', async (req, res, next) => {
 router.put('/', async (req, res, next) => {
   try {
     let current = await getConfig(CONFIG_KEY, store.theme);
-    if (!current || !current.mode) {
+    if (!current || !current.themeColor) {
       current = { ...DEFAULT_THEME, ...current };
     }
 
     const body = req.body;
-    let newMode = body.mode || current.mode;
-    let newThemeColor = current.themeColor;
+    let newThemeColor = body.themeColor || current.themeColor;
 
-    // คำนวณ themeColor ตามโหมดที่เลือก
-    if (newMode === 'preset4') {
-      newThemeColor = body.themeColor || current.themeColor;
-      // บันทึกสี custom ลงใน preset4 ของระบบ เพื่อให้เรียกดูครั้งหน้าได้สีที่เคยบันทึก
-      if (store.themePresets && store.themePresets.preset4) {
+    // ถ้าสีที่ส่งมาไม่ใช่ 3 สีหลัก ให้เอาไปอัปเดตใส่ preset4
+    if (store.themePresets) {
+      const isPreset1 = newThemeColor === store.themePresets.preset1.themeColor;
+      const isPreset2 = newThemeColor === store.themePresets.preset2.themeColor;
+      const isPreset3 = newThemeColor === store.themePresets.preset3.themeColor;
+      
+      if (!isPreset1 && !isPreset2 && !isPreset3) {
         store.themePresets.preset4.themeColor = newThemeColor;
       }
-    } else if (store.themePresets && store.themePresets[newMode]) {
-      const preset = store.themePresets[newMode];
-      newThemeColor = preset.themeColor;
     }
 
     const nextTheme = {
       ...current,
       ...body,
-      mode: newMode,
       themeColor: newThemeColor,
       // ลบตัวแปรเก่าๆ ออกเพื่อไม่ให้รก
+      mode: undefined,
       primaryColor: undefined,
       secondaryColor: undefined,
       customColor: undefined,
