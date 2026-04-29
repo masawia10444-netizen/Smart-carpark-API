@@ -51,7 +51,14 @@
 ---
 
 ## 🔎 3. ค้นหาทะเบียนรถ (Search)
-- **Endpoint**: `GET /api/v1/kiosk/search?plateNo=ทน-4383&deviceId=KIOSK-ZONE-A-01`
+- **Endpoint (GET)**: `GET /api/v1/kiosk/search?plateNo=ทน-4383&deviceId=KIOSK-ZONE-A-01`
+- **Endpoint (PUT)**: `PUT /api/v1/kiosk/search` (รองรับการส่งผ่าน Body ตามความต้องการของหน้าบ้าน)
+```json
+{
+  "plateNo": "ทน-4383",
+  "deviceId": "KIOSK-ZONE-A-01"
+}
+```
 - **Response**: คืนค่ารายการรถที่ยังไม่ได้จ่ายเงิน (Pending)
 - **Note**: การส่ง `deviceId` ไปด้วย จะเป็นการอัปเดตสถานะ **Online** ของตู้ไปในตัว
 
