@@ -616,7 +616,9 @@ const openapi = {
                   type: 'object',
                   properties: {
                     mode: { type: 'string', description: 'preset1, preset2, preset3, custom' },
-                    primaryColor: { type: 'string', description: 'Calculated color to use in UI' },
+                    themeName: { type: 'string', description: 'Name of the current theme' },
+                    primaryColor: { type: 'string', description: 'Calculated primary color' },
+                    secondaryColor: { type: 'string', description: 'Calculated secondary color' },
                     customColor: { type: 'string', description: 'Color used when mode is custom' },
                     logoUrl: { type: 'string', nullable: true },
                     presets: { type: 'object' }
@@ -640,6 +642,8 @@ const openapi = {
                 properties: {
                   mode: { type: 'string', description: 'preset1, preset2, preset3, custom' },
                   customColor: { type: 'string' },
+                  secondaryColor: { type: 'string', description: 'Optional for custom mode' },
+                  themeName: { type: 'string', description: 'Optional for custom mode' },
                   logoUrl: { type: 'string' }
                 }
               } 
