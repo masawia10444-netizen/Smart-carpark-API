@@ -249,9 +249,9 @@ router.get('/transaction/:id', async (req, res, next) => {
  */
 router.post('/payment', async (req, res, next) => {
   try {
-    const { transactionId, method, amount, deviceId } = req.body;
+    const { transactionId, method, amount, deviceId, channel } = req.body;
 
-    // [NEW] ตรวจสอบสถานะตู้ก่อนรับเงิน
+    // [NEW] ตรวจสอบสถานะตู้ก่อนรับเงิน (เฉพาะเมื่อมาจากตู้ Kiosk)
     if (deviceId) {
       const kiosk = store.kiosks.find(k => k.deviceId === deviceId);
       if (kiosk && kiosk.status === 'maintenance') {
@@ -263,12 +263,24 @@ router.post('/payment', async (req, res, next) => {
       await updateKioskStatus(deviceId, { ip: req.ip });
     }
 
-    // บันทึกการจ่ายเงิน โดยระบุช่องทางเป็น 'kiosk'
+    // กำหนดช่องทางและผู้ทำรายการให้สอดคล้องกับความจริง
+    const paymentChannel = channel || 'kiosk'; // ค่าปริยายคือ kiosk ถ้าไม่ได้ส่งมา
+    let processedBy = 'system';
+    
+    if (paymentChannel === 'mobile') {
+      processedBy = 'mobile_web'; // ลูกค้าจ่ายเองผ่านมือถือ
+    } else if (deviceId) {
+      processedBy = `kiosk_${deviceId}`; // จ่ายที่ตู้
+    } else {
+      processedBy = 'system_kiosk';
+    }
+
+    // บันทึกการจ่ายเงิน
     const result = await processPayment(transactionId, {
       method: method || 'qr_code',
-      channel: 'kiosk',
+      channel: paymentChannel,
       amount: amount,
-      processedBy: deviceId ? `kiosk_${deviceId}` : 'system_kiosk'
+      processedBy: processedBy
     });
 
     if (!result) {

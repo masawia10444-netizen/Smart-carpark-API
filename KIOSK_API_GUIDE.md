@@ -112,7 +112,8 @@
   "transactionId": "today_1",
   "method": "qr_code",
   "amount": 2190,
-  "deviceId": "KIOSK-ZONE-A-01"
+  "deviceId": "KIOSK-ZONE-A-01",  // (ถ้าจ่ายจากมือถือ ไม่ต้องส่งค่านี้)
+  "channel": "kiosk"              // (ออปชันเสริม: ส่ง "kiosk" หรือ "mobile" เพื่อเก็บสถิติ)
 }
 ```
 - **Response**: จะได้รับ `exitTimeLimit` กลับมา (เส้นตายที่ลูกค้าต้องขับรถออก)
