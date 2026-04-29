@@ -42,7 +42,29 @@ Authorization: Bearer <your_token>
 ---
 
 ## 🎨 4. ธีมและโลโก้ (Theme Settings)
-- **ดึงธีม**: `GET /api/v1/theme`
+- **ดึงค่าเริ่มต้นและข้อมูลธีม**: `GET /api/v1/theme`
+    - หน้าบ้านจะได้รับข้อมูลสีปัจจุบัน และชุดสีที่เตรียมไว้ให้ (Presets)
+    ```json
+    {
+      "themeColor": "#1a73e8", // สีที่ใช้อยู่ ณ ปัจจุบัน
+      "logoUrl": null,
+      "presets": {
+        "preset1": { "themeColor": "#1a73e8" },
+        "preset2": { "themeColor": "#2e7d32" },
+        "preset3": { "themeColor": "#d32f2f" },
+        "preset4": { "themeColor": "#FF5733" } // สี Custom ที่แอดมินเคยตั้งไว้ล่าสุด
+      }
+    }
+    ```
+- **บันทึกสีใหม่**: `PUT /api/v1/theme`
+    - ส่งแค่ `themeColor` อย่างเดียว ไม่ว่าจะเป็นการเลือกจาก Preset หรือ Color Picker ก็ตาม
+    ```json
+    {
+      "themeColor": "#FF5733"
+    }
+    ```
+    - *Note: Backend จะอัปเดตเป็นสีปัจจุบันให้ทันที และถ้าสีนี้ไม่ใช่ preset 1-3 มันจะแอบบันทึกเก็บไว้ใน `preset4` ให้อัตโนมัติ (เผื่อวันหลังแอดมินเข้ามาดูจะได้เจอสีเดิม)*
+
 - **📸 อัปโหลดโลโก้**: `POST /api/v1/theme/upload-logo`
     - ใช้ `FormData` ส่งไฟล์ในฟิลด์ชื่อ `logo`
     - จะได้รับ `logoUrl` กลับมาสำหรับนำไปใช้ใน `<img src="...">`
