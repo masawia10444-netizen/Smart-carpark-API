@@ -149,7 +149,7 @@ router.get('/config', async (req, res, next) => {
     }
 
     res.json({
-      theme: store.theme || { themeColor: '#1a73e8', logoUrl: null },
+      theme: store.theme || { themeColor: '#FFD54F', logoUrl: null },
       systemName: 'Smart Carpark Kiosk',
       status: status // บอกสถานะตู้กลับไป (ถ้าไม่มี deviceId จะเป็น 'unregistered')
     });

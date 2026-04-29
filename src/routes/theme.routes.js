@@ -37,7 +37,7 @@ const upload = multer({
 
 const DEFAULT_THEME = {
   mode: 'preset1',
-  themeColor: '#1a73e8',
+  themeColor: '#FFD54F',
   logoUrl: null
 };
 
